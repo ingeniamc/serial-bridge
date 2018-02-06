@@ -64,6 +64,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+static bool Triggered;
+static uint32_t u32TigTime;
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE END PV */
@@ -123,6 +125,8 @@ int main(void)
   hsp_init(&Hsp1, &hspi1);
   HAL_GPIO_WritePin(GPIOD, LD4_Pin|LD3_Pin|LD5_Pin|LD6_Pin
                           |Audio_RST_Pin, GPIO_PIN_SET);
+  Triggered = true;
+  u32TigTime = HAL_GetTick();
   u32Millis = HAL_GetTick();
   memset((void *)u16TxBuf, 0, sizeof(u16TxBuf));
 
@@ -221,8 +225,39 @@ hsp_process(HspInst* ptInst, uint16_t* pu16Pbuf)
 {
     size_t length;
     uint16_t u16RxBuf[128];
+    uint8_t String[32];
+    eHspStatus Res;
 
-	hsp_read_async(ptInst, 0x20, pu16Pbuf, u16RxBuf, &length);
+    if (Triggered != false)
+    {
+    	Res = hsp_read_async(ptInst, 0x11, pu16Pbuf, u16RxBuf, &length);
+
+    	switch(Res)
+    	{
+    	case HSP_SUCCESS:
+    		snprintf((char*)String, 32, "Data config: %u, %u, %u, %u\n\r", u16RxBuf[0], u16RxBuf[1], u16RxBuf[2], u16RxBuf[3]);
+    		CDC_Transmit_FS(String, strlen((char*)String));
+    		Triggered = false;
+    		u32TigTime = HAL_GetTick();
+    		break;
+    	case HSP_ERROR:
+    		snprintf((char*)String, 32, "Failure!\n\r");
+    		CDC_Transmit_FS(String, strlen((char*)String));
+    		Triggered = false;
+    		u32TigTime = HAL_GetTick();
+    		break;
+    	default:
+    		/** Nothing */
+    		break;
+    	}
+    }
+    else
+    {
+    	if ((HAL_GetTick() - u32TigTime) > 1000)
+    	{
+    		Triggered = true;
+    	}
+    }
 }
 
 /* USER CODE END 4 */

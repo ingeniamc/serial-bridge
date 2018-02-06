@@ -125,7 +125,7 @@ eHspStatus
 hsp_read_async(HspInst* ptInst, uint16_t addr, uint16_t *in_buf,
         uint16_t *out_buf, size_t *out_sz)
 {
-    frm_t fr;
+    static frm_t fr;
     
     switch(ptInst->eState)
     {
@@ -139,6 +139,7 @@ hsp_read_async(HspInst* ptInst, uint16_t addr, uint16_t *in_buf,
     	    frame_init(&fr, addr, HSP_REQ_READ, HSP_FRM_NOTSEG, ptInst->pTxBuf, NULL, 0);
     	    hsp_transfer(ptInst, &fr);
     	    *out_sz = 0;
+    	    ptInst->eState = HSP_READ_REQUEST_ACK;
        	break;
        case HSP_READ_REQUEST_ACK:
            /* Wait fall IRQ indicating received data */
@@ -161,29 +162,41 @@ hsp_read_async(HspInst* ptInst, uint16_t addr, uint16_t *in_buf,
            }
        	break;
        case HSP_READ_ANSWER:
-           /* Check reception */
-           if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) && (frame_get_addr(&fr) == addr))
-           {
-               /* Copy read data to buffer - Also copy it in case of error msg */
-               size_t sz = frame_get_static_data(&fr, ptInst->pRxBuf);
-               ptInst->pRxBuf += sz;
-               *out_sz += sz;
-               if (frame_get_cmd(&fr) == HSP_REP_READ_ERROR)
-               {
-            	   ptInst->eState = HSP_STANDBY;
-               }
-               else if (frame_get_cmd(&fr) == HSP_REP_ACK)
-               {
-                   if(frame_get_segmented(&fr) != false)
-                   {
-                	   ptInst->eState = HSP_READ_REQUEST;
-                   }
-               }
-           }
-           else
-           {
-        	   ptInst->eState = HSP_STANDBY;
-           }
+			/** Wait until data is received */
+			if (HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY)
+			{
+			   /* Check reception */
+			   if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) && (frame_get_addr(&fr) == addr))
+			   {
+				   /* Copy read data to buffer - Also copy it in case of error msg */
+				   size_t sz = frame_get_static_data(&fr, ptInst->pRxBuf);
+				   ptInst->pRxBuf += sz;
+				   *out_sz += sz;
+				   if (frame_get_cmd(&fr) == HSP_REP_READ_ERROR)
+				   {
+					   ptInst->eState = HSP_ERROR;
+				   }
+				   else if (frame_get_cmd(&fr) == HSP_REP_ACK)
+				   {
+					   if(frame_get_segmented(&fr) != false)
+					   {
+						   ptInst->eState = HSP_READ_REQUEST;
+					   }
+					   else
+					   {
+						   ptInst->eState = HSP_SUCCESS;
+					   }
+				   }
+				   else
+				   {
+					   ptInst->eState = HSP_ERROR;
+				   }
+			   }
+			   else
+			   {
+				   ptInst->eState = HSP_ERROR;
+			   }
+    	   }
        	break;
     default:
     	ptInst->eState = HSP_STANDBY;
