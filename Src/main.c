@@ -66,6 +66,7 @@
 /* USER CODE BEGIN PV */
 static bool Triggered;
 static uint32_t u32TigTime;
+static uint16_t u16TestState;
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE END PV */
@@ -75,7 +76,7 @@ void SystemClock_Config(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-void hsp_process(HspInst* ptInst, uint16_t* pu16Pbuf);
+void hsp_process(HspInst* ptInst);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -92,7 +93,6 @@ int main(void)
   /* USER CODE BEGIN 1 */
   HspInst Hsp1;
   uint32_t u32Millis;
-  uint16_t u16TxBuf[128];
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -121,14 +121,14 @@ int main(void)
   MX_USB_DEVICE_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-  //CDC_Transmit_FS((uint8_t*)"Starting HSP\n", 13);
+  CDC_Transmit_FS((uint8_t*)"Starting HSP\n", 13);
   hsp_init(&Hsp1, &hspi1);
   HAL_GPIO_WritePin(GPIOD, LD4_Pin|LD3_Pin|LD5_Pin|LD6_Pin
                           |Audio_RST_Pin, GPIO_PIN_SET);
   Triggered = true;
   u32TigTime = HAL_GetTick();
   u32Millis = HAL_GetTick();
-  memset((void *)u16TxBuf, 0, sizeof(u16TxBuf));
+  u16TestState = 0;
 
   /* USER CODE END 2 */
 
@@ -136,7 +136,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  hsp_process(&Hsp1, u16TxBuf);
+	  hsp_process(&Hsp1);
 
 	  if ((HAL_GetTick() - u32Millis) > 100)
 	  {
@@ -221,35 +221,158 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 void
-hsp_process(HspInst* ptInst, uint16_t* pu16Pbuf)
+hsp_process(HspInst* ptInst)
 {
     size_t length;
     uint16_t u16RxBuf[128];
+    uint16_t u16TxBuf[128];
     uint8_t String[32];
     eHspStatus Res;
 
     if (Triggered != false)
     {
-    	Res = hsp_read_async(ptInst, 0x11, pu16Pbuf, u16RxBuf, &length);
+		switch(u16TestState)
+		{
+		case 0:
+			memset(u16TxBuf, 0, sizeof(u16TxBuf));
+			u16TestState++;
+			break;
+		case 1:
+	    	Res = hsp_read_async(ptInst, 0x11, u16TxBuf, u16RxBuf, &length);
 
-    	switch(Res)
-    	{
-    	case HSP_SUCCESS:
-    		snprintf((char*)String, 32, "Data config: %u, %u, %u, %u\n\r", u16RxBuf[0], u16RxBuf[1], u16RxBuf[2], u16RxBuf[3]);
-    		CDC_Transmit_FS(String, strlen((char*)String));
+	    	switch(Res)
+	    	{
+	    	case HSP_SUCCESS:
+	    		snprintf((char*)String, 32, "StatusWord: %u, %u, %u, %u\n\r", u16RxBuf[0], u16RxBuf[1], u16RxBuf[2], u16RxBuf[3]);
+	    		CDC_Transmit_FS(String, strlen((char*)String));
+	    		u16TestState++;
+	    		u16TxBuf[0] = 6;
+	    		u32TigTime = HAL_GetTick();
+	    		break;
+	    	case HSP_ERROR:
+	    		snprintf((char*)String, 32, "Failure!\n\r");
+	    		CDC_Transmit_FS(String, strlen((char*)String));
+	    		u16TestState = 8;
+	    		break;
+	    	default:
+	    		/** Nothing */
+	    		break;
+	    	}
+			break;
+			case 2:
+		    	if ((HAL_GetTick() - u32TigTime) > 500)
+		    	{
+		    		u16TestState++;
+		    	}
+				break;
+		case 3:
+			Res = hsp_write_async(ptInst, 0x10, u16TxBuf, 1);
+
+			switch(Res)
+			{
+			case HSP_SUCCESS:
+				snprintf((char*)String, 32, "Sent ControlWord = 6 \n\r");
+				CDC_Transmit_FS(String, strlen((char*)String));
+				u16TestState++;
+				u16TxBuf[0] = 0;
+				break;
+			case HSP_ERROR:
+				snprintf((char*)String, 32, "Failure!\n\r");
+				CDC_Transmit_FS(String, strlen((char*)String));
+				u16TestState = 8;
+				break;
+			default:
+				/** Nothing */
+				break;
+			}
+			break;
+		case 4:
+			Res = hsp_read_async(ptInst, 0x11, u16TxBuf, u16RxBuf, &length);
+
+			switch(Res)
+			{
+			case HSP_SUCCESS:
+				snprintf((char*)String, 32, "StatusWord: %u, %u, %u, %u\n\r", u16RxBuf[0], u16RxBuf[1], u16RxBuf[2], u16RxBuf[3]);
+				CDC_Transmit_FS(String, strlen((char*)String));
+				u16TestState++;
+				u16TxBuf[0] = 7;
+				u32TigTime = HAL_GetTick();
+				break;
+			case HSP_ERROR:
+				snprintf((char*)String, 32, "Failure!\n\r");
+				CDC_Transmit_FS(String, strlen((char*)String));
+				u16TestState = 8;
+				break;
+			default:
+				/** Nothing */
+				break;
+			}
+			break;
+		case 5:
+			if ((HAL_GetTick() - u32TigTime) > 500)
+			{
+				u16TestState++;
+			}
+			break;
+		case 6:
+			Res = hsp_write_async(ptInst, 0x10, u16TxBuf, 1);
+
+			switch(Res)
+			{
+			case HSP_SUCCESS:
+				snprintf((char*)String, 32, "Sent ControlWord = 7 \n\r");
+				CDC_Transmit_FS(String, strlen((char*)String));
+				u16TestState++;
+				u16TxBuf[0] = 0;
+				break;
+			case HSP_ERROR:
+				snprintf((char*)String, 32, "Failure!\n\r");
+				CDC_Transmit_FS(String, strlen((char*)String));
+				u16TestState = 8;
+				break;
+			default:
+				/** Nothing */
+				break;
+			}
+			break;
+		case 7:
+			Res = hsp_read_async(ptInst, 0x11, u16TxBuf, u16RxBuf, &length);
+
+			switch(Res)
+			{
+			case HSP_SUCCESS:
+				snprintf((char*)String, 32, "StatusWord: %u, %u, %u, %u\n\r", u16RxBuf[0], u16RxBuf[1], u16RxBuf[2], u16RxBuf[3]);
+				CDC_Transmit_FS(String, strlen((char*)String));
+				u16TestState++;
+				u16TxBuf[0] = 6;
+				u32TigTime = HAL_GetTick();
+				break;
+			case HSP_ERROR:
+				snprintf((char*)String, 32, "Failure!\n\r");
+				CDC_Transmit_FS(String, strlen((char*)String));
+				u16TestState = 8;
+				break;
+			default:
+				/** Nothing */
+				break;
+			}
+			break;
+		case 8:
+			if ((HAL_GetTick() - u32TigTime) > 500)
+			{
+				u16TestState = 0;
+				Triggered = false;
+				u32TigTime = HAL_GetTick();
+				snprintf((char*)String, 32, "Test Finished!\n\r");
+				CDC_Transmit_FS(String, strlen((char*)String));
+			}
+			break;
+		default:
+			u16TestState = 0;
     		Triggered = false;
     		u32TigTime = HAL_GetTick();
-    		break;
-    	case HSP_ERROR:
-    		snprintf((char*)String, 32, "Failure!\n\r");
-    		CDC_Transmit_FS(String, strlen((char*)String));
-    		Triggered = false;
-    		u32TigTime = HAL_GetTick();
-    		break;
-    	default:
-    		/** Nothing */
-    		break;
-    	}
+			break;
+		}
     }
     else
     {

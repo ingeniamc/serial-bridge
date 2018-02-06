@@ -41,11 +41,11 @@ hsp_init(HspInst* ptInst, SPI_HandleTypeDef* pspi)
 	  ptInst->phSpi = pspi;
 }
 
+static frm_t fr;
+
 eHspStatus
 hsp_write_async(HspInst* ptInst, uint16_t addr, uint16_t *buf, size_t sz)
 {
-    frm_t fr;
-
     switch (ptInst->eState)
     {
     case HSP_STANDBY:
@@ -91,25 +91,39 @@ hsp_write_async(HspInst* ptInst, uint16_t addr, uint16_t *buf, size_t sz)
     	/** Wait until data is received */
     	if (HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY)
     	{
-            if ((MX_SPI1_CheckCrc(ptInst->phSpi) != true) ||
-                (frame_get_addr(&fr) != addr) ||
-                (frame_get_cmd(&fr) != HSP_REP_ACK))
+    	   /* Check reception */
+		   if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) &&
+			   (frame_get_addr(&fr) == addr))
+		   {
+			   if (frame_get_cmd(&fr) == HSP_REP_WRITE_ERROR)
+			   {
+				   ptInst->eState = HSP_ERROR;
+			   }
+			   else if (frame_get_cmd(&fr) == HSP_REP_ACK)
+			   {
+				   if(ptInst->sz > HSP_FRM_STA_SZ)
+				   {
+					   ptInst->sz -= HSP_FRM_STA_SZ;
+					   ptInst->pTxBuf += HSP_FRM_STA_SZ;
+					   ptInst->eState = HSP_WRITE_REQUEST;
+				   }
+				   else
+				   {
+					   ptInst->eState = HSP_SUCCESS;
+				   }
+			   }
+			   else
+			   {
+				   ptInst->eState = HSP_ERROR;
+			   }
+		   }
+		   else
+		   {
+			   ptInst->eState = HSP_ERROR;
+		   }
+
             {
-            	ptInst->eState = HSP_STANDBY;
-            }
-            else
-            {
-				if (ptInst->sz >= HSP_FRM_STA_SZ)
-				{
-					ptInst->eState = HSP_WRITE_REQUEST;
-					ptInst->pTxBuf += HSP_FRM_STA_SZ;
-					ptInst->sz -= HSP_FRM_STA_SZ;
-				}
-				else
-				{
-					ptInst->eState = HSP_STANDBY;
-					sz = 0;
-				}
+
             }
     	}
     	break;
@@ -125,8 +139,6 @@ eHspStatus
 hsp_read_async(HspInst* ptInst, uint16_t addr, uint16_t *in_buf,
         uint16_t *out_buf, size_t *out_sz)
 {
-    static frm_t fr;
-    
     switch(ptInst->eState)
     {
     case HSP_STANDBY:
@@ -166,7 +178,8 @@ hsp_read_async(HspInst* ptInst, uint16_t addr, uint16_t *in_buf,
 			if (HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY)
 			{
 			   /* Check reception */
-			   if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) && (frame_get_addr(&fr) == addr))
+			   if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) &&
+				   (frame_get_addr(&fr) == addr))
 			   {
 				   /* Copy read data to buffer - Also copy it in case of error msg */
 				   size_t sz = frame_get_static_data(&fr, ptInst->pRxBuf);
