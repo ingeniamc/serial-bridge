@@ -18,6 +18,7 @@ typedef enum
 	HSP_READ_REQUEST_ACK,
 	HSP_READ_REQUEST_WAIT,
 	HSP_READ_ANSWER,
+	HSP_CYCLIC_ANSWER,
 	HSP_ERROR
 }eHspStatus;
 
@@ -45,4 +46,7 @@ hsp_read_async(HspInst* ptInst, uint16_t addr, uint16_t *in_buf, uint16_t *out_b
 /** Write a static data */
 eHspStatus
 hsp_write_async(HspInst* ptInst, uint16_t addr, uint16_t *buff, size_t sz );
+
+eHspStatus
+hsp_cyclic_tranfer(HspInst* ptInst, uint16_t *in_buf, uint16_t *out_buf);
 #endif

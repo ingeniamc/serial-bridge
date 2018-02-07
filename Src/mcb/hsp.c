@@ -141,11 +141,11 @@ hsp_read_async(HspInst* ptInst, uint16_t addr, uint16_t *in_buf,
 {
     switch(ptInst->eState)
     {
-    case HSP_STANDBY:
-       	ptInst->pTxBuf = in_buf;
-       	ptInst->pRxBuf = out_buf;
-       	ptInst->eState = HSP_READ_REQUEST;
-       	break;
+    	case HSP_STANDBY:
+			ptInst->pTxBuf = in_buf;
+			ptInst->pRxBuf = out_buf;
+			ptInst->eState = HSP_READ_REQUEST;
+			break;
        case HSP_READ_REQUEST:
     	    /* Send read request */
     	    frame_init(&fr, addr, HSP_REQ_READ, HSP_FRM_NOTSEG, ptInst->pTxBuf, NULL, 0);
@@ -218,3 +218,34 @@ hsp_read_async(HspInst* ptInst, uint16_t addr, uint16_t *in_buf,
 
     return ptInst->eState;
 }
+
+eHspStatus hsp_cyclic_tranfer(HspInst* ptInst, uint16_t *in_buf, uint16_t *out_buf)
+{
+    switch(ptInst->eState)
+    {
+    	case HSP_STANDBY:
+		/* Wait fall IRQ indicating received data */
+		if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
+		{
+			frame_init(&fr, 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, in_buf, out_buf, 3);
+
+     	    ptInst->eState = HSP_CYCLIC_ANSWER;
+            /* Now we just need to send the already built frame */
+            hsp_transfer(ptInst, &fr);
+		}
+		break;
+    	case HSP_CYCLIC_ANSWER:
+			/** Wait until data is received */
+			if (HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY)
+			{
+				ptInst->eState = HSP_STANDBY;
+			}
+    		break;
+    	default:
+    		break;
+	}
+
+    return ptInst->eState;
+}
+
+

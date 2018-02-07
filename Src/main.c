@@ -64,6 +64,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+#define ERROR_CASE 14
+
 static bool Triggered;
 static uint32_t u32TigTime;
 static uint16_t u16TestState;
@@ -252,19 +254,19 @@ hsp_process(HspInst* ptInst)
 	    	case HSP_ERROR:
 	    		snprintf((char*)String, 32, "Failure!\n\r");
 	    		CDC_Transmit_FS(String, strlen((char*)String));
-	    		u16TestState = 8;
+	    		u16TestState = ERROR_CASE;
 	    		break;
 	    	default:
 	    		/** Nothing */
 	    		break;
 	    	}
 			break;
-			case 2:
-		    	if ((HAL_GetTick() - u32TigTime) > 500)
-		    	{
-		    		u16TestState++;
-		    	}
-				break;
+		case 2:
+			if ((HAL_GetTick() - u32TigTime) > 500)
+			{
+				u16TestState++;
+			}
+			break;
 		case 3:
 			Res = hsp_write_async(ptInst, 0x10, u16TxBuf, 1);
 
@@ -279,7 +281,7 @@ hsp_process(HspInst* ptInst)
 			case HSP_ERROR:
 				snprintf((char*)String, 32, "Failure!\n\r");
 				CDC_Transmit_FS(String, strlen((char*)String));
-				u16TestState = 8;
+				u16TestState = ERROR_CASE;
 				break;
 			default:
 				/** Nothing */
@@ -295,13 +297,14 @@ hsp_process(HspInst* ptInst)
 				snprintf((char*)String, 32, "StatusWord: %u, %u, %u, %u\n\r", u16RxBuf[0], u16RxBuf[1], u16RxBuf[2], u16RxBuf[3]);
 				CDC_Transmit_FS(String, strlen((char*)String));
 				u16TestState++;
-				u16TxBuf[0] = 7;
+				u16TxBuf[0] = 0x10;
+				u16TxBuf[1] = 0x2;
 				u32TigTime = HAL_GetTick();
 				break;
 			case HSP_ERROR:
 				snprintf((char*)String, 32, "Failure!\n\r");
 				CDC_Transmit_FS(String, strlen((char*)String));
-				u16TestState = 8;
+				u16TestState = ERROR_CASE;
 				break;
 			default:
 				/** Nothing */
@@ -315,20 +318,17 @@ hsp_process(HspInst* ptInst)
 			}
 			break;
 		case 6:
-			Res = hsp_write_async(ptInst, 0x10, u16TxBuf, 1);
+			Res = hsp_write_async(ptInst, 0x651, u16TxBuf, 2);
 
 			switch(Res)
 			{
 			case HSP_SUCCESS:
-				snprintf((char*)String, 32, "Sent ControlWord = 7 \n\r");
-				CDC_Transmit_FS(String, strlen((char*)String));
 				u16TestState++;
-				u16TxBuf[0] = 0;
+				u16TxBuf[0] = 0x20;
+				u16TxBuf[1] = 0x4;
 				break;
 			case HSP_ERROR:
-				snprintf((char*)String, 32, "Failure!\n\r");
-				CDC_Transmit_FS(String, strlen((char*)String));
-				u16TestState = 8;
+				u16TestState = ERROR_CASE;
 				break;
 			default:
 				/** Nothing */
@@ -336,21 +336,17 @@ hsp_process(HspInst* ptInst)
 			}
 			break;
 		case 7:
-			Res = hsp_read_async(ptInst, 0x11, u16TxBuf, u16RxBuf, &length);
+			Res = hsp_write_async(ptInst, 0x652, u16TxBuf, 2);
 
 			switch(Res)
 			{
 			case HSP_SUCCESS:
-				snprintf((char*)String, 32, "StatusWord: %u, %u, %u, %u\n\r", u16RxBuf[0], u16RxBuf[1], u16RxBuf[2], u16RxBuf[3]);
-				CDC_Transmit_FS(String, strlen((char*)String));
 				u16TestState++;
-				u16TxBuf[0] = 6;
-				u32TigTime = HAL_GetTick();
+				u16TxBuf[0] = 0x11;
+				u16TxBuf[1] = 0x2;
 				break;
 			case HSP_ERROR:
-				snprintf((char*)String, 32, "Failure!\n\r");
-				CDC_Transmit_FS(String, strlen((char*)String));
-				u16TestState = 8;
+				u16TestState = ERROR_CASE;
 				break;
 			default:
 				/** Nothing */
@@ -358,6 +354,101 @@ hsp_process(HspInst* ptInst)
 			}
 			break;
 		case 8:
+			Res = hsp_write_async(ptInst, 0x661, u16TxBuf, 2);
+
+			switch(Res)
+			{
+			case HSP_SUCCESS:
+				u16TestState++;
+				u16TxBuf[0] = 0x30;
+				u16TxBuf[1] = 0x4;
+				break;
+			case HSP_ERROR:
+				u16TestState = ERROR_CASE;
+				break;
+			default:
+				/** Nothing */
+				break;
+			}
+			break;
+		case 9:
+			Res = hsp_write_async(ptInst, 0x662, u16TxBuf, 2);
+
+			switch(Res)
+			{
+			case HSP_SUCCESS:
+				u16TestState++;
+				u16TxBuf[0] = 0x2;
+				break;
+			case HSP_ERROR:
+				u16TestState = ERROR_CASE;
+				break;
+			default:
+				/** Nothing */
+				break;
+			}
+			break;
+		case 10:
+			Res = hsp_write_async(ptInst, 0x650, u16TxBuf, 1);
+
+			switch(Res)
+			{
+			case HSP_SUCCESS:
+				u16TestState++;
+				u16TxBuf[0] = 0x2;
+				break;
+			case HSP_ERROR:
+				u16TestState = ERROR_CASE;
+				break;
+			default:
+				/** Nothing */
+				break;
+			}
+			break;
+		case 11:
+			Res = hsp_write_async(ptInst, 0x660, u16TxBuf, 1);
+
+			switch(Res)
+			{
+			case HSP_SUCCESS:
+				u16TestState++;
+				u16TxBuf[0] = 0x2;
+				break;
+			case HSP_ERROR:
+				u16TestState = ERROR_CASE;
+				break;
+			default:
+				/** Nothing */
+				break;
+			}
+			break;
+		case 12:
+			Res = hsp_write_async(ptInst, 0x640, u16TxBuf, 1);
+
+			switch(Res)
+			{
+			case HSP_SUCCESS:
+				u16TestState++;
+				u16TxBuf[0] = 0x6;
+				u16TxBuf[1] = 0x0;
+				u16TxBuf[2] = 0x0;
+				u16RxBuf[0] = 0;
+				u16RxBuf[1] = 0;
+				u16RxBuf[2] = 0;
+				u16RxBuf[3] = 0;
+				break;
+			case HSP_ERROR:
+				u16TestState = ERROR_CASE;
+				break;
+			default:
+				/** Nothing */
+				break;
+			}
+			break;
+		case 13:
+			hsp_cyclic_tranfer(ptInst, u16RxBuf, u16TxBuf);
+			break;
+		case ERROR_CASE:
 			if ((HAL_GetTick() - u32TigTime) > 500)
 			{
 				u16TestState = 0;
