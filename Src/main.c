@@ -58,8 +58,7 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
-#include "mcb/hsp.h"
-#include "usbd_cdc_if.h"
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -76,7 +75,7 @@ void MX_FREERTOS_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-void hsp_process(HspInst* ptInst);
+
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */

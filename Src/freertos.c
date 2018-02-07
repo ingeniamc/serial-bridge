@@ -51,7 +51,11 @@
 #include "task.h"
 #include "cmsis_os.h"
 
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */
+#include <stdbool.h>
+#include "spi.h"
+#include "mcb/hsp.h"
+#include "usbd_cdc_if.h"
 
 /* USER CODE END Includes */
 
@@ -87,7 +91,7 @@ extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* USER CODE BEGIN FunctionPrototypes */
-
+void hsp_process(HspInst* ptInst);
 /* USER CODE END FunctionPrototypes */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
@@ -218,7 +222,7 @@ hsp_process(HspInst* ptInst)
 {
     size_t length;
     uint16_t u16RxBuf[128];
-    uint16_t u16TxBuf[128];
+    static uint16_t u16TxBuf[128];
     uint8_t String[32];
     eHspStatus Res;
 
