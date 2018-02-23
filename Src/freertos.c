@@ -92,7 +92,6 @@ extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* USER CODE BEGIN FunctionPrototypes */
-void hsp_process(HspInst* ptInst);
 /* USER CODE END FunctionPrototypes */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
@@ -156,11 +155,11 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* definition and creation of HspTx */
-  osMessageQStaticDef(HspTx, 16, frm_t, HspTxBuffer, &HspTxControlBlock);
+  osMessageQStaticDef(HspTx, 16, frm_t*, HspTxBuffer, &HspTxControlBlock);
   HspTxHandle = osMessageCreate(osMessageQ(HspTx), NULL);
 
   /* definition and creation of HspRx */
-  osMessageQStaticDef(HspRx, 16, frm_t, HspRxBuffer, &HspRxControlBlock);
+  osMessageQStaticDef(HspRx, 16, frm_t*, HspRxBuffer, &HspRxControlBlock);
   HspRxHandle = osMessageCreate(osMessageQ(HspRx), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
