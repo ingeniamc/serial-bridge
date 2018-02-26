@@ -17,14 +17,10 @@ node('xcore') {
                 mkdir coco_workspace
             fi
             '''
-        sh  '/opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ide/TrueSTUDIO --launcher.suppressErrors -nosplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -data coco_workspace -importAll build/TrueSTUDIO || true'
+        sh  '/opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ide/TrueSTUDIO --launcher.suppressErrors -nosplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -data coco_workspace -importAll build/TrueSTUDIO'
     }
 
-    stage ('Clean projects') {
+    stage ('Build projects') {
         sh  '/opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ide/TrueSTUDIO --launcher.suppressErrors -nosplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -data coco_workspace -cleanBuild ccore-lite/Release'
     }
-	
-    stage('Build projects') {
-        sh  '/opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ide/TrueSTUDIO --launcher.suppressErrors -nosplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -data coco_workspace -build ccore-lite/Release'
-    }   
 }
