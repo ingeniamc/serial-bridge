@@ -17,14 +17,14 @@ node('xcore') {
                 mkdir coco_workspace
             fi
             '''
-        sh  '/opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ide/TrueSTUDIO --launcher.suppressErrors -nosplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -data coco_workspace -importAll build/TrueSTUDIO || true'
+        sh  '/opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ide/TrueSTUDIO -nosplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -data coco_workspace -importAll build/TrueSTUDIO || true'
     }
 
     stage ('Clean projects') {
-        sh  '/opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ide/TrueSTUDIO --launcher.suppressErrors -nosplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -data coco_workspace -cleanBuild all'
+        sh  '/opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ide/TrueSTUDIO -nosplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -data coco_workspace -cleanBuild all'
     }
 	
     stage('Build projects') {
-        sh  '/opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ide/TrueSTUDIO --launcher.suppressErrors -nosplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -data coco_workspace -build all'
+        sh  '/opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ide/TrueSTUDIO -nosplash -application org.eclipse.cdt.managedbuilder.core.headlessbuild -data coco_workspace -build all'
     }   
 }
