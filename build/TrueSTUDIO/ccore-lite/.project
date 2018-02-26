@@ -427,6 +427,30 @@
 			<location>PARENT-3-PROJECT_LOC/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c</location>
 		</link>
 	<link>
+			
+			<type>2</type>
+			
+		</link><link>
+			
+			<type>2</type>
+			
+		</link><link>
+			
+			<type>2</type>
+			
+		</link><link>
+			
+			<type>2</type>
+			
+		</link><link>
+			
+			<type>2</type>
+			
+		</link><link>
+			
+			<type>2</type>
+			
+		</link><link>
 			<name>Drivers</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
