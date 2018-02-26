@@ -18,7 +18,7 @@ typedef union
         /** Segmented message */
         unsigned int   pending:1;
         /** Frame command identification */
-        unsigned int   cmd:3; 
+        unsigned int   cmd:3;
         /** Address of the Static Data */
         unsigned int   addr:12;
     };
@@ -39,8 +39,8 @@ typedef union
 
 
 IER_RET
-frame_init(frm_t *frm, uint16_t addr, uint8_t cmd, uint8_t pending,
-           const void *sta_buf, const void *dyn_buf, size_t dyn_sz)
+frame_create(frm_t *frm, uint16_t addr, uint8_t cmd, uint8_t pending,
+           	 const void *sta_buf, const void *dyn_buf, size_t dyn_sz)
 {
     IER_RET err = IER_SUCCESS;
 
@@ -67,10 +67,19 @@ frame_init(frm_t *frm, uint16_t addr, uint8_t cmd, uint8_t pending,
         frm->buf[HSP_FRM_HDR_FLD] = header.all;
 
         /* Copy static & dynamic buffer (if any) */
-        memcpy(&frm->buf[HSP_FRM_STA_FLD], sta_buf, sizeof(frm->buf[0]) *
-               HSP_FRM_STA_SZ);
-        memcpy(&frm->buf[HSP_FRM_DYN_FLD], dyn_buf, sizeof(frm->buf[0]) *
-               dyn_sz);
+        if (sta_buf != NULL)
+        {
+			memcpy(&frm->buf[HSP_FRM_STA_FLD], sta_buf, sizeof(frm->buf[0]) *
+				   HSP_FRM_STA_SZ);
+        }
+        else
+        {
+			memset(&frm->buf[HSP_FRM_STA_FLD], 0, sizeof(frm->buf[0]) *
+				   HSP_FRM_STA_SZ);
+        }
+
+		memcpy(&frm->buf[HSP_FRM_DYN_FLD], dyn_buf, sizeof(frm->buf[0]) *
+			   dyn_sz);
 
         /* Compute CRC and add it to buffer */
         frm->sz = HSP_FRM_HDR_SZ + HSP_FRM_STA_SZ + dyn_sz;

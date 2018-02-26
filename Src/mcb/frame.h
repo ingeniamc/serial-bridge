@@ -64,18 +64,8 @@ typedef struct {
  * @return 0 success, error code otherwise
  */
 IER_RET
-frame_init(frm_t *frm, uint16_t addr, uint8_t cmd, uint8_t segmented,
-           const void *sta_buf, const void *dyn_buff, size_t dyn_sz);
-
-/**
- * Check if the computed with the data frame matches with the received one.
- *
- * @param [in] frm
- *      Input frame.
- * @return true if if matches, false otherwise.
- */
-bool
-frame_check_crc(const frm_t *frm);
+frame_create(frm_t *frm, uint16_t addr, uint8_t cmd, uint8_t segmented,
+           	 const void *sta_buf, const void *dyn_buff, size_t dyn_sz);
 
 /**
  * Returns the address of the static data.
