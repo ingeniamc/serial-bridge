@@ -7,6 +7,8 @@
 #include "error.h"
 #include "gpio.h"
 
+static uint16_t u16Irq;
+
 static void
 hsp_spi_transfer(const HspInst* ptInst, frm_t *in, frm_t *out);
 
@@ -31,27 +33,17 @@ hsp_spi_transfer(const HspInst* ptInst, frm_t *in, frm_t *out)
 void
 hsp_init(HspInst* ptInst, EHspIntf eIntf)
 {
-	  GPIO_InitTypeDef GPIO_InitStruct;
-
 	  ptInst->eState = HSP_STANDBY;
 
 	  switch(eIntf)
 	  {
 	  case SPI_BASED:
 		  /** This must depend on the selected SPI interface */
-		  GPIO_InitStruct.Pin = GPIO_PIN_4;
-		  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-		  GPIO_InitStruct.Pull = GPIO_NOPULL;
-		  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-		  GPIO_InitStruct.Pin = GPIO_PIN_15;
-		  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-		  GPIO_InitStruct.Pull = GPIO_NOPULL;
-		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
 		  ptInst->phSpi = &hspi1;
 		  ptInst->write = &hsp_write_spi_config;
 		  ptInst->read = &hsp_read_spi_config;
+		  ptInst->pu16Irq = &u16Irq;
+		  *ptInst->pu16Irq = 0;
 		  break;
 	  case UART_BASED:
 		  ptInst->phUsart = &huart2;
@@ -68,6 +60,7 @@ void hsp_deinit(HspInst* ptInst)
 	ptInst->phSpi = NULL;
 	ptInst->write = NULL;
 	ptInst->read = NULL;
+	ptInst->pu16Irq = NULL;
 }
 
 EHspStatus
@@ -76,6 +69,7 @@ hsp_write_spi_config(HspInst* ptInst, uint16_t addr, uint16_t *buf, size_t sz)
     switch (ptInst->eState)
     {
     case HSP_STANDBY:
+    	*ptInst->pu16Irq = 0;
     	ptInst->sz = sz;
     	ptInst->eState = HSP_WRITE_REQUEST;
     	break;
@@ -93,23 +87,18 @@ hsp_write_spi_config(HspInst* ptInst, uint16_t addr, uint16_t *buf, size_t sz)
 			}
 
 			hsp_spi_transfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
-			ptInst->eState = HSP_WRITE_REQUEST_ACK;
-        }
-    	break;
-    case HSP_WRITE_REQUEST_ACK:
-        /* Wait fall IRQ indicating received data */
-        if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_RESET)
-        {
+
             /* Note: We prepare the next frame before the activation of the IRQ to
              * improve the timing of the system */
             frame_create(&(ptInst->Txfrm), addr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0);
-        	ptInst->eState = HSP_WRITE_REQUEST_WAIT;
+        	ptInst->eState = HSP_WRITE_REQUEST_ACK;
         }
     	break;
-    case HSP_WRITE_REQUEST_WAIT:
+    case HSP_WRITE_REQUEST_ACK:
         /* Check if data is already available (IRQ) */
-        if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
+        if (*ptInst->pu16Irq == 1)
         {
+        	*ptInst->pu16Irq = 0;
         	ptInst->eState = HSP_WRITE_ANSWER;
             /* Now we just need to send the already built frame */
         	hsp_spi_transfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
@@ -117,7 +106,7 @@ hsp_write_spi_config(HspInst* ptInst, uint16_t addr, uint16_t *buf, size_t sz)
     	break;
     case HSP_WRITE_ANSWER:
     	/** Wait until data is received */
-    	if (HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY)
+    	if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY) && (*ptInst->pu16Irq == 1))
     	{
     	   /* Check reception */
 		   if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) &&
@@ -165,40 +154,34 @@ hsp_read_spi_config(HspInst* ptInst, uint16_t addr, uint16_t *buff, size_t *out_
     switch(ptInst->eState)
     {
     	case HSP_STANDBY:
+    		*ptInst->pu16Irq = 0;
 			ptInst->eState = HSP_READ_REQUEST;
 			break;
        case HSP_READ_REQUEST:
-           if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
-           {
+			if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
+			{
 				/* Send read request */
 				frame_create(&(ptInst->Txfrm), addr, HSP_REQ_READ, HSP_FRM_NOTSEG, NULL, NULL, 0);
 				hsp_spi_transfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
 				*out_sz = 0;
+				/* Note: We prepare the next frame before checking the IRQ to improve
+				* the timing of the system */
+				frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0);
 				ptInst->eState = HSP_READ_REQUEST_ACK;
-           }
+			}
        	break;
        case HSP_READ_REQUEST_ACK:
-           /* Wait fall IRQ indicating received data */
-           if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_RESET)
-           {
-               /* Note: We prepare the next frame before checking the IRQ to improve
-                * the timing of the system */
-               frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0);
-               ptInst->eState = HSP_READ_REQUEST_WAIT;
-           }
-       	break;
-       case HSP_READ_REQUEST_WAIT:
            /* Check if data is already available (IRQ) */
-           if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
+    	   if (*ptInst->pu16Irq == 1)
            {
-        	   ptInst->eState = HSP_READ_ANSWER;
                /* Now we just need to send the already built frame */
         	   hsp_spi_transfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
+        	   ptInst->eState = HSP_READ_ANSWER;
            }
        	break;
        case HSP_READ_ANSWER:
 			/** Wait until data is received */
-			if (HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY)
+			if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY) && (*ptInst->pu16Irq == 1))
 			{
 			   /* Check reception */
 			   if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) &&
@@ -216,7 +199,7 @@ hsp_read_spi_config(HspInst* ptInst, uint16_t addr, uint16_t *buff, size_t *out_
 				   {
 					   if(frame_get_segmented(&(ptInst->Rxfrm)) != false)
 					   {
-						   ptInst->eState = HSP_READ_REQUEST_WAIT;
+						   ptInst->eState = HSP_READ_REQUEST_ACK;
 					   }
 					   else
 					   {
@@ -271,4 +254,12 @@ EHspStatus hsp_cyclic_spi_tranfer(HspInst* ptInst, uint16_t *in_buf, uint16_t *o
     return ptInst->eState;
 }
 
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	switch (GPIO_Pin)
+	{
+		default:
+			u16Irq = 1;
+			break;
+	}
+}

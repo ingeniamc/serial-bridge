@@ -65,16 +65,16 @@ osThreadId defaultTaskHandle;
 uint32_t defaultTaskBuffer[ 128 ];
 osStaticThreadDef_t defaultTaskControlBlock;
 osThreadId HspTaskHandle;
-uint32_t HspBuffer[ 128 ];
+uint32_t HspBuffer[ 256 ];
 osStaticThreadDef_t HspControlBlock;
 osThreadId UserTaskHandle;
-uint32_t UserTaskBuffer[ 256 ];
+uint32_t UserTaskBuffer[ 1024 ];
 osStaticThreadDef_t UserTaskControlBlock;
 osMessageQId HspTxHandle;
-uint8_t HspTxBuffer[ 16 * sizeof( frm_t ) ];
+uint8_t HspTxBuffer[ 16 * sizeof( frm_t* ) ];
 osStaticMessageQDef_t HspTxControlBlock;
 osMessageQId HspRxHandle;
-uint8_t HspRxBuffer[ 16 * sizeof( frm_t ) ];
+uint8_t HspRxBuffer[ 16 * sizeof( frm_t* ) ];
 osStaticMessageQDef_t HspRxControlBlock;
 osMutexId CommsMuxHandle;
 osStaticMutexDef_t CommsMuxControlBlock;
@@ -142,11 +142,11 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of HspTask */
-  osThreadStaticDef(HspTask, HspFunc, osPriorityHigh, 0, 128, HspBuffer, &HspControlBlock);
+  osThreadStaticDef(HspTask, HspFunc, osPriorityNormal, 0, 256, HspBuffer, &HspControlBlock);
   HspTaskHandle = osThreadCreate(osThread(HspTask), NULL);
 
   /* definition and creation of UserTask */
-  osThreadStaticDef(UserTask, StartUserTask, osPriorityLow, 0, 256, UserTaskBuffer, &UserTaskControlBlock);
+  osThreadStaticDef(UserTask, StartUserTask, osPriorityLow, 0, 1024, UserTaskBuffer, &UserTaskControlBlock);
   UserTaskHandle = osThreadCreate(osThread(UserTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -185,11 +185,13 @@ void StartDefaultTask(void const * argument)
 /* HspFunc function */
 void HspFunc(void const * argument)
 {
-	/* USER CODE BEGIN HspFunc */
+  /* USER CODE BEGIN HspFunc */
 	osEvent MsgOut;
+	char cString[16];
 	/** SPI initialization */
 	McbInst dvr;
 
+	memset(cString, 0, 16);
 	mcb_init(&dvr, MCB_OVER_SPI, MCB_BLOCKING);
 
 	/* Infinite loop */
@@ -207,6 +209,7 @@ void HspFunc(void const * argument)
 			{
 				case HSP_REQ_READ:
 					mcb_read(&dvr, frame_get_addr(pframe), &(pframe->buf[1]), pframe->sz);
+					break;
 				case HSP_REQ_WRITE:
 					mcb_write(&dvr, frame_get_addr(pframe),  &(pframe->buf[1]), pframe->sz);
 				  break;
@@ -214,11 +217,12 @@ void HspFunc(void const * argument)
 					/** Nothing */
 				  break;
 			}
-
+			sprintf(cString, "Status: %u\n\r", pframe->buf[1]);
+			CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
 			osMessagePut(HspRxHandle, (uint32_t)pframe, osWaitForever);
 		}
 	}
-	/* USER CODE END HspFunc */
+  /* USER CODE END HspFunc */
 }
 
 /* StartUserTask function */

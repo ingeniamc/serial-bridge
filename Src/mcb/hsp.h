@@ -18,16 +18,12 @@ typedef enum
 	HSP_WRITE_REQUEST,
 	/** Waiting for write request ack */
 	HSP_WRITE_REQUEST_ACK,
-	/** Waiting for slave processing time */
-	HSP_WRITE_REQUEST_WAIT,
 	/** Processing answer from write request */
 	HSP_WRITE_ANSWER,
 	/** Sending a read request */
 	HSP_READ_REQUEST,
 	/** Waiting for read request ack */
 	HSP_READ_REQUEST_ACK,
-	/** Waiting for slave processing time */
-	HSP_READ_REQUEST_WAIT,
 	/** Processing answer from read request */
 	HSP_READ_ANSWER,
 	/** Waiting and processing slave cyclic frame */
@@ -55,6 +51,8 @@ struct HspInst
 	EHspIntf eIntf;
 	/** Pointer to spi struct */
 	SPI_HandleTypeDef* phSpi;
+	/** Pointer to IRQ signal */
+	uint16_t* pu16Irq;
 	/** Pointer to uart struct */
 	UART_HandleTypeDef* phUsart;
 	/** Frame pool for holding tx data */
