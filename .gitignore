@@ -1,6 +1,7 @@
 
 .metadata
 **/Debug/
+**/Release/
 tmp/
 *.tmp
 *.bak
