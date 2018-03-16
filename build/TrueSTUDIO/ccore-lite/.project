@@ -72,19 +72,19 @@
 	</natures>
 	<linkedResources>
 		<link>
-			
+			<name>Application</name>
 			<type>2</type>
-			
+			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
-			
+			<name>Drivers</name>
 			<type>2</type>
-			
+			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
-			
+			<name>Middlewares</name>
 			<type>2</type>
-			
+			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
 			<name>Application/TrueSTUDIO</name>
@@ -125,11 +125,6 @@
 			<name>Application/TrueSTUDIO/startup_stm32f407xx.s</name>
 			<type>1</type>
 			<location>PARENT-1-PROJECT_LOC/startup_stm32f407xx.s</location>
-		</link>
-		<link>
-			<name>Application/User/adc.c</name>
-			<type>1</type>
-			<location>PARENT-3-PROJECT_LOC/Src/adc.c</location>
 		</link>
 		<link>
 			<name>Application/User/crc.c</name>
@@ -222,9 +217,14 @@
 			<location>PARENT-3-PROJECT_LOC/Src/mcb/hsp.c</location>
 		</link>
 		<link>
-			<name>Application/mcb/mcb.c</name>
+			<name>Application/mcb/mcb_master.c</name>
 			<type>1</type>
-			<location>PARENT-3-PROJECT_LOC/Src/mcb/mcb.c</location>
+			<location>PARENT-3-PROJECT_LOC/Src/mcb/mcb_master.c</location>
+		</link>
+		<link>
+			<name>Application/mcb/mcb_slave.c</name>
+			<type>1</type>
+			<location>PARENT-3-PROJECT_LOC/Src/mcb/mcb_slave.c</location>
 		</link>
 		<link>
 			<name>Drivers/CMSIS/system_stm32f4xx.c</name>
@@ -235,16 +235,6 @@
 			<name>Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal.c</name>
 			<type>1</type>
 			<location>PARENT-3-PROJECT_LOC/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c</location>
-		</link>
-		<link>
-			<name>Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_adc.c</name>
-			<type>1</type>
-			<location>PARENT-3-PROJECT_LOC/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c</location>
-		</link>
-		<link>
-			<name>Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_adc_ex.c</name>
-			<type>1</type>
-			<location>PARENT-3-PROJECT_LOC/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc_ex.c</location>
 		</link>
 		<link>
 			<name>Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_cortex.c</name>
@@ -427,40 +417,8 @@
 			<location>PARENT-3-PROJECT_LOC/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c</location>
 		</link>
 	<link>
-			
-			<type>2</type>
-			
-		</link><link>
-			
-			<type>2</type>
-			
-		</link><link>
-			
-			<type>2</type>
-			
-		</link><link>
-			
-			<type>2</type>
-			
-		</link><link>
-			
-			<type>2</type>
-			
-		</link><link>
-			
-			<type>2</type>
-			
-		</link><link>
-			<name>Drivers</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link><link>
-			<name>Application</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link><link>
-			<name>Middlewares</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			<name>Drivers/CMSIS/system_stm32f4xx.c</name>
+			<type>1</type>
+			<location>PARENT-3-PROJECT_LOC//Src/system_stm32f4xx.c</location>
 		</link></linkedResources>
 </projectDescription>

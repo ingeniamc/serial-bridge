@@ -55,7 +55,8 @@
 #include <stdbool.h>
 #include "spi.h"
 #include "usart.h"
-#include "mcb/mcb.h"
+#include "mcb/mcb_master.h"
+#include "mcb/mcb_slave.h"
 #include "usbd_cdc_if.h"
 
 /* USER CODE END Includes */
@@ -65,17 +66,29 @@ osThreadId defaultTaskHandle;
 uint32_t defaultTaskBuffer[ 128 ];
 osStaticThreadDef_t defaultTaskControlBlock;
 osThreadId HspTaskHandle;
-uint32_t HspBuffer[ 256 ];
+uint32_t HspBuffer[ 2048 ];
 osStaticThreadDef_t HspControlBlock;
 osThreadId UserTaskHandle;
 uint32_t UserTaskBuffer[ 1024 ];
 osStaticThreadDef_t UserTaskControlBlock;
+osThreadId McbSlaveTaskHandle;
+uint32_t McbSlaveTaskBuffer[ 1024 ];
+osStaticThreadDef_t McbSlaveTaskControlBlock;
+osThreadId BridgeTaskHandle;
+uint32_t BridgeTaskBuffer[ 1024 ];
+osStaticThreadDef_t BridgeTaskControlBlock;
 osMessageQId HspTxHandle;
-uint8_t HspTxBuffer[ 16 * sizeof( frm_t* ) ];
+uint8_t HspTxBuffer[ 16 * sizeof( McbMssg* ) ];
 osStaticMessageQDef_t HspTxControlBlock;
 osMessageQId HspRxHandle;
-uint8_t HspRxBuffer[ 16 * sizeof( frm_t* ) ];
+uint8_t HspRxBuffer[ 16 * sizeof( McbMssg* ) ];
 osStaticMessageQDef_t HspRxControlBlock;
+osMessageQId UartSlaveTxHandle;
+uint8_t UartSlaveTxBuffer[ 16 * sizeof( McbMssg* ) ];
+osStaticMessageQDef_t UartSlaveTxControlBlock;
+osMessageQId UartSlaveRxHandle;
+uint8_t UartSlaveRxBuffer[ 16 * sizeof( McbMssg* ) ];
+osStaticMessageQDef_t UartSlaveRxControlBlock;
 osMutexId CommsMuxHandle;
 osStaticMutexDef_t CommsMuxControlBlock;
 
@@ -87,6 +100,8 @@ extern volatile unsigned long ulHighFrequencyTimerTicks;
 void StartDefaultTask(void const * argument);
 void HspFunc(void const * argument);
 void StartUserTask(void const * argument);
+void StartMcbSlaveTask(void const * argument);
+void StartBridgeTask(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -157,12 +172,20 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of HspTask */
-  osThreadStaticDef(HspTask, HspFunc, osPriorityNormal, 0, 256, HspBuffer, &HspControlBlock);
+  osThreadStaticDef(HspTask, HspFunc, osPriorityAboveNormal, 0, 2048, HspBuffer, &HspControlBlock);
   HspTaskHandle = osThreadCreate(osThread(HspTask), NULL);
 
   /* definition and creation of UserTask */
-  osThreadStaticDef(UserTask, StartUserTask, osPriorityLow, 0, 1024, UserTaskBuffer, &UserTaskControlBlock);
+  osThreadStaticDef(UserTask, StartUserTask, osPriorityIdle, 0, 1024, UserTaskBuffer, &UserTaskControlBlock);
   UserTaskHandle = osThreadCreate(osThread(UserTask), NULL);
+
+  /* definition and creation of McbSlaveTask */
+  osThreadStaticDef(McbSlaveTask, StartMcbSlaveTask, osPriorityNormal, 0, 1024, McbSlaveTaskBuffer, &McbSlaveTaskControlBlock);
+  McbSlaveTaskHandle = osThreadCreate(osThread(McbSlaveTask), NULL);
+
+  /* definition and creation of BridgeTask */
+  osThreadStaticDef(BridgeTask, StartBridgeTask, osPriorityHigh, 0, 1024, BridgeTaskBuffer, &BridgeTaskControlBlock);
+  BridgeTaskHandle = osThreadCreate(osThread(BridgeTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -170,12 +193,20 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* definition and creation of HspTx */
-  osMessageQStaticDef(HspTx, 16, frm_t*, HspTxBuffer, &HspTxControlBlock);
+  osMessageQStaticDef(HspTx, 16, McbMssg*, HspTxBuffer, &HspTxControlBlock);
   HspTxHandle = osMessageCreate(osMessageQ(HspTx), NULL);
 
   /* definition and creation of HspRx */
-  osMessageQStaticDef(HspRx, 16, frm_t*, HspRxBuffer, &HspRxControlBlock);
+  osMessageQStaticDef(HspRx, 16, McbMssg*, HspRxBuffer, &HspRxControlBlock);
   HspRxHandle = osMessageCreate(osMessageQ(HspRx), NULL);
+
+  /* definition and creation of UartSlaveTx */
+  osMessageQStaticDef(UartSlaveTx, 16, McbMssg*, UartSlaveTxBuffer, &UartSlaveTxControlBlock);
+  UartSlaveTxHandle = osMessageCreate(osMessageQ(UartSlaveTx), NULL);
+
+  /* definition and creation of UartSlaveRx */
+  osMessageQStaticDef(UartSlaveRx, 16, McbMssg*, UartSlaveRxBuffer, &UartSlaveRxControlBlock);
+  UartSlaveRxHandle = osMessageCreate(osMessageQ(UartSlaveRx), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -202,12 +233,10 @@ void HspFunc(void const * argument)
 {
   /* USER CODE BEGIN HspFunc */
 	osEvent MsgOut;
-	char cString[16];
 	/** SPI initialization */
-	McbInst dvr;
-
-	memset(cString, 0, 16);
-	mcb_init(&dvr, MCB_OVER_SPI, MCB_BLOCKING);
+	McbInst dvr_master;
+	mcb_master_init(&dvr_master, MCB_OVER_SPI, MCB_BLOCKING);
+	size_t sz;
 
 	/* Infinite loop */
 	for(;;)
@@ -216,25 +245,26 @@ void HspFunc(void const * argument)
 		* is requested.
 		*/
 		MsgOut = osMessageGet(HspTxHandle, osWaitForever);
-
+		HAL_GPIO_WritePin(GPIOD, LD5_Pin, GPIO_PIN_SET);
 		if (MsgOut.status == osEventMessage)
 		{
-			frm_t* pframe = (frm_t*) MsgOut.value.p;
-			switch (frame_get_cmd(pframe))
+			McbMssg* pMcbMssg = (McbMssg*)MsgOut.value.p;
+
+			switch (pMcbMssg->cmd)
 			{
 				case HSP_REQ_READ:
-					mcb_read(&dvr, frame_get_addr(pframe), &(pframe->buf[1]), pframe->sz);
+					mcb_master_read(&dvr_master, pMcbMssg);
 					break;
 				case HSP_REQ_WRITE:
-					mcb_write(&dvr, frame_get_addr(pframe),  &(pframe->buf[1]), pframe->sz);
+					pMcbMssg->eStatus = mcb_master_write(&dvr_master, pMcbMssg);
 				  break;
 				default:
 					/** Nothing */
 				  break;
 			}
-			sprintf(cString, "Status: %u\n\r", pframe->buf[1]);
-			CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
-			osMessagePut(HspRxHandle, (uint32_t)pframe, osWaitForever);
+
+			osMessagePut(HspRxHandle, (uint32_t)pMcbMssg, osWaitForever);
+			HAL_GPIO_WritePin(GPIOD, LD5_Pin, GPIO_PIN_RESET);
 		}
 	}
   /* USER CODE END HspFunc */
@@ -246,31 +276,112 @@ void StartUserTask(void const * argument)
   /* USER CODE BEGIN StartUserTask */
   uint32_t u32Millis;
   osEvent MsgOut;
-  frm_t frame;
 
   u32Millis = HAL_GetTick();
-  HAL_GPIO_WritePin(GPIOD, LD4_Pin|LD3_Pin|LD5_Pin|LD6_Pin, GPIO_PIN_SET);
+//  HAL_GPIO_WritePin(GPIOD, LD6_Pin, GPIO_PIN_SET);
   /* Infinite loop */
   for(;;)
   {
-	  MsgOut = osMessageGet(HspRxHandle, 10);
+//	  MsgOut = osMessageGet(HspRxHandle, 10);
 
 	  if (MsgOut.status == osEventMessage)
 	  {
-		  HAL_GPIO_TogglePin(GPIOD, LD4_Pin);
+//		  HAL_GPIO_TogglePin(GPIOD, LD4_Pin);
 	  }
 
 
 	  if ((HAL_GetTick() - u32Millis) > 1000)
 	  {
-		  frame_create(&frame, 0x11, HSP_REQ_READ, HSP_FRM_NOTSEG, NULL, NULL, 0);
-		  osMessagePut(HspTxHandle, (uint32_t)&frame, osWaitForever);
-		  HAL_GPIO_TogglePin(GPIOD, LD3_Pin|LD5_Pin|LD6_Pin);
+//		  frame_create(&frame, 0x11, HSP_REQ_READ, HSP_FRM_NOTSEG, NULL, NULL, 0);
+//		  osMessagePut(HspTxHandle, (uint32_t)&frame, osWaitForever);
+//		  HAL_GPIO_TogglePin(GPIOD, LD6_Pin);
 		  u32Millis = HAL_GetTick();
 	  }
 	  osDelay(1);
   }
   /* USER CODE END StartUserTask */
+}
+
+/* StartMcbSlaveTask function */
+void StartMcbSlaveTask(void const * argument)
+{
+  /* USER CODE BEGIN StartMcbSlaveTask */
+	osEvent MsgOut;
+	uint32_t u32Millis = HAL_GetTick();
+	McbInst dvr_slave;
+	mcb_slave_init(&dvr_slave, MCB_OVER_SERIAL, MCB_NON_BLOCKING);
+
+	McbMssg mcb_messg;
+//	/* Infinite loop */
+	for(;;)
+	{
+		HAL_GPIO_TogglePin(GPIOD, LD6_Pin);
+		if ((HAL_GetTick() - u32Millis) > 100)
+		{
+			if (mcb_slave_read(&dvr_slave, &mcb_messg) == MCB_MESSAGE_SUCCESS)
+			{
+				osMessagePut(UartSlaveTxHandle, (uint32_t)&mcb_messg, osWaitForever);
+				HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_SET);
+
+				MsgOut = osMessageGet(UartSlaveRxHandle, osWaitForever);
+				if (MsgOut.status == osEventMessage)
+				{
+					McbMssg* pMcbSlaveMssg = (McbMssg*) MsgOut.value.p;
+					if (mcb_slave_write(&dvr_slave, pMcbSlaveMssg))
+					{
+
+					}
+					HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_RESET);
+				}
+			}
+			u32Millis = HAL_GetTick();
+		}
+		osDelay(1);
+	}
+  /* USER CODE END StartMcbSlaveTask */
+}
+
+/* StartBridgeTask function */
+void StartBridgeTask(void const * argument)
+{
+  /* USER CODE BEGIN StartBridgeTask */
+	osEvent MsgSlaveOut, MsgMasterOut;
+	char cString[16];
+	memset(cString, 0, 16);
+	/* Infinite loop */
+	for(;;)
+	{
+		MsgSlaveOut = osMessageGet(UartSlaveTxHandle, osWaitForever);	// Wait 10ms
+
+		if (MsgSlaveOut.status == osEventMessage)
+		{
+			McbMssg* pMcbSlaveMssg = (McbMssg*) MsgSlaveOut.value.p;
+			HAL_GPIO_WritePin(GPIOD, LD4_Pin, GPIO_PIN_SET);
+
+/*			sprintf(cString, "BRIDGE	Uart readed, addr: %d, cmd: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
+					pMcbSlaveMssg->addr, pMcbSlaveMssg->cmd, pMcbSlaveMssg->data[0], pMcbSlaveMssg->data[1], pMcbSlaveMssg->data[2], pMcbSlaveMssg->data[3]);
+			CDC_Transmit_FS((uint8_t*)cString, strlen(cString));*/
+
+			osMessagePut(HspTxHandle, (uint32_t)pMcbSlaveMssg, osWaitForever);
+
+			MsgMasterOut = osMessageGet(HspRxHandle, osWaitForever);	// Wait 10ms
+
+			if (MsgMasterOut.status == osEventMessage)
+			{
+				McbMssg* pMcbMasterMssg = (McbMssg*) MsgMasterOut.value.p;
+
+/*				sprintf(cString, "BRIDGE Response	Uart readed, addr: %d, cmd: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
+						pMcbMasterMssg->addr, pMcbMasterMssg->cmd, pMcbMasterMssg->data[0], pMcbMasterMssg->data[1], pMcbMasterMssg->data[2], pMcbMasterMssg->data[3]);
+				CDC_Transmit_FS((uint8_t*)cString, strlen(cString));*/
+
+				osMessagePut(UartSlaveRxHandle, (uint32_t)pMcbMasterMssg, osWaitForever);
+				HAL_GPIO_WritePin(GPIOD, LD4_Pin, GPIO_PIN_RESET);
+			}
+		}
+
+		osDelay(1);
+	}
+  /* USER CODE END StartBridgeTask */
 }
 
 /* USER CODE BEGIN Application */

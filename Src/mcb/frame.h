@@ -14,6 +14,8 @@
 /** Ingenia protocol frame maximum buffer size */
 #define HSP_FRM_MAX_DATA_SZ     128U
 
+/** Ingenia protocol frame static buffer header size */
+#define HSP_FRM_HEAD_SZ			1U
 /** Ingenia protocol frame static buffer size */
 #define HSP_FRM_STA_SZ          4U
 

@@ -7,6 +7,8 @@
 #include "usart.h"
 #include "frame.h"
 
+#define SIZEOF_STATIC_FRAME_BYTES 12
+
 /** Hsp communication states */
 typedef enum
 {
@@ -39,16 +41,27 @@ typedef enum
 	SPI_BASED,
 	/** Uart interdace */
 	UART_BASED
-}EHspIntf;
+} EHspIntf;
+
+/** Hsp modes options */
+typedef enum
+{
+	/** Master mode */
+	MASTER_MODE,
+	/** Slave mode */
+	SLAVE_MODE
+} EHspMode;
+typedef struct EHspMode HspMode;
 
 typedef struct HspInst HspInst;
-
 struct HspInst
 {
 	/** Indicates the state of the communication bus */
 	EHspStatus eState;
 	/** Indicates the interface type */
 	EHspIntf eIntf;
+	/** Indicates the interface mode */
+	EHspMode eMode;
 	/** Pointer to spi struct */
 	SPI_HandleTypeDef* phSpi;
 	/** Pointer to IRQ signal */
@@ -62,14 +75,14 @@ struct HspInst
 	/** Pending data size to be transmitted/received */
 	size_t sz;
 	/** Write frame */
-	EHspStatus (*write)(HspInst* ptInst, uint16_t addr, uint16_t *buff, size_t sz);
+	EHspStatus (*write)(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data, size_t *sz);
 	/** Read frame */
-	EHspStatus (*read)(HspInst* ptInst, uint16_t addr, uint16_t *buff, size_t* sz);
+	EHspStatus (*read)(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data, size_t *sz);
 };
 
 /** Initialize a High speed protocol interface */
 void
-hsp_init(HspInst* ptInst, EHspIntf eIntf);
+hsp_init(HspInst* ptInst, EHspIntf eIntf, EHspMode eMode);
 
 /** Deinitialize a high speed protocol interface */
 void
