@@ -287,7 +287,7 @@ hsp_read_uart_slave(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 	else
 	{
 		HAL_UART_AbortTransmit(ptInst->phUsart);
-		if(HAL_UART_GetState(ptInst->phUsart) == HAL_UART_ERROR_DMA)
+		if (HAL_UART_GetState(ptInst->phUsart) == HAL_UART_ERROR_DMA)
 		{
 		   ptInst->eState = HSP_ERROR;
 		}

@@ -338,7 +338,7 @@ void StartBridgeTask(void const * argument)
 	/* Infinite loop */
 	for(;;)
 	{
-		MsgSlaveOut = osMessageGet(UartSlaveTxHandle, osWaitForever);	// Wait 10ms
+		MsgSlaveOut = osMessageGet(UartSlaveTxHandle, osWaitForever);
 
 		if (MsgSlaveOut.status == osEventMessage)
 		{
@@ -351,7 +351,7 @@ void StartBridgeTask(void const * argument)
 
 			osMessagePut(HspTxHandle, (uint32_t)pMcbSlaveMssg, osWaitForever);
 
-			MsgMasterOut = osMessageGet(HspRxHandle, osWaitForever);	// Wait 10ms
+			MsgMasterOut = osMessageGet(HspRxHandle, osWaitForever);
 
 			if (MsgMasterOut.status == osEventMessage)
 			{
