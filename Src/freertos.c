@@ -65,7 +65,7 @@ osThreadId defaultTaskHandle;
 uint32_t defaultTaskBuffer[ 128 ];
 osStaticThreadDef_t defaultTaskControlBlock;
 osThreadId HspTaskHandle;
-uint32_t HspBuffer[ 2048 ];
+uint32_t HspBuffer[ 256 ];
 osStaticThreadDef_t HspControlBlock;
 osThreadId UserTaskHandle;
 uint32_t UserTaskBuffer[ 1024 ];
@@ -171,7 +171,7 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of HspTask */
-  osThreadStaticDef(HspTask, HspFunc, osPriorityAboveNormal, 0, 2048, HspBuffer, &HspControlBlock);
+  osThreadStaticDef(HspTask, HspFunc, osPriorityAboveNormal, 0, 256, HspBuffer, &HspControlBlock);
   HspTaskHandle = osThreadCreate(osThread(HspTask), NULL);
 
   /* definition and creation of UserTask */
@@ -233,8 +233,8 @@ void HspFunc(void const * argument)
   /* USER CODE BEGIN HspFunc */
 	osEvent MsgOut;
 	/** SPI initialization */
-	McbInst dvr_master;
-	mcb_init(&dvr_master, MCB_OVER_SPI, MCB_MASTER, MCB_BLOCKING);
+	McbInst dvrMaster;
+	mcb_init(&dvrMaster, MCB_OVER_SPI, MCB_MASTER, MCB_BLOCKING);
 
 	/* Infinite loop */
 	for(;;)
@@ -243,7 +243,7 @@ void HspFunc(void const * argument)
 		* is requested.
 		*/
 		MsgOut = osMessageGet(HspTxHandle, osWaitForever);
-//		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_SET);
 		if (MsgOut.status == osEventMessage)
 		{
 			McbMssg* pMcbMssg = (McbMssg*)MsgOut.value.p;
@@ -251,10 +251,10 @@ void HspFunc(void const * argument)
 			switch (pMcbMssg->cmd)
 			{
 				case HSP_REQ_READ:
-					pMcbMssg->eStatus = mcb_read(&dvr_master, pMcbMssg);
+					pMcbMssg->eStatus = mcb_read(&dvrMaster, pMcbMssg);
 					break;
 				case HSP_REQ_WRITE:
-					pMcbMssg->eStatus = mcb_write(&dvr_master, pMcbMssg);
+					pMcbMssg->eStatus = mcb_write(&dvrMaster, pMcbMssg);
 					break;
 				default:
 					/** Nothing */
@@ -267,7 +267,7 @@ void HspFunc(void const * argument)
 			}
 
 			osMessagePut(HspRxHandle, (uint32_t)pMcbMssg, osWaitForever);
-//			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_RESET);
 		}
 	}
   /* USER CODE END HspFunc */
@@ -277,29 +277,10 @@ void HspFunc(void const * argument)
 void StartUserTask(void const * argument)
 {
   /* USER CODE BEGIN StartUserTask */
-  uint32_t u32Millis;
-  osEvent MsgOut;
 
-  u32Millis = HAL_GetTick();
-//  HAL_GPIO_WritePin(GPIOD, LD6_Pin, GPIO_PIN_SET);
   /* Infinite loop */
   for(;;)
   {
-//	  MsgOut = osMessageGet(HspRxHandle, 10);
-
-	  if (MsgOut.status == osEventMessage)
-	  {
-//		  HAL_GPIO_TogglePin(GPIOD, LD4_Pin);
-	  }
-
-
-	  if ((HAL_GetTick() - u32Millis) > 1000)
-	  {
-//		  frame_create(&frame, 0x11, HSP_REQ_READ, HSP_FRM_NOTSEG, NULL, NULL, 0);
-//		  osMessagePut(HspTxHandle, (uint32_t)&frame, osWaitForever);
-//		  HAL_GPIO_TogglePin(GPIOD, LD6_Pin);
-		  u32Millis = HAL_GetTick();
-	  }
 	  osDelay(1);
   }
   /* USER CODE END StartUserTask */
@@ -311,29 +292,28 @@ void StartMcbSlaveTask(void const * argument)
   /* USER CODE BEGIN StartMcbSlaveTask */
 	osEvent MsgOut;
 	uint32_t u32Millis = HAL_GetTick();
-	McbInst dvr_slave;
-	mcb_init(&dvr_slave, MCB_OVER_SERIAL, MCB_SLAVE, MCB_NON_BLOCKING);
+	McbInst dvrSlave;
+	mcb_init(&dvrSlave, MCB_OVER_SERIAL, MCB_SLAVE, MCB_NON_BLOCKING);
 
-	McbMssg mcb_messg;
-//	/* Infinite loop */
+	McbMssg mcbMessg;
+	/* Infinite loop */
 	for(;;)
 	{
 		if ((HAL_GetTick() - u32Millis) > 1)
 		{
-
-			if (mcb_read(&dvr_slave, &mcb_messg) == MCB_MESSAGE_SUCCESS)
+			/* Chek for incoming uart message*/
+			if (mcb_read(&dvrSlave, &mcbMessg) == MCB_MESSAGE_SUCCESS)
 			{
 				HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_SET);
-				osMessagePut(UartSlaveTxHandle, (uint32_t)&mcb_messg, osWaitForever);
+				osMessagePut(UartSlaveTxHandle, (uint32_t)&mcbMessg, osWaitForever);
 
 				MsgOut = osMessageGet(UartSlaveRxHandle, osWaitForever);
 				if (MsgOut.status == osEventMessage)
 				{
 					McbMssg* pMcbSlaveMssg = (McbMssg*) MsgOut.value.p;
-					if (mcb_write(&dvr_slave, pMcbSlaveMssg) != MCB_MESSAGE_SUCCESS)
+					if (mcb_write(&dvrSlave, pMcbSlaveMssg) != MCB_MESSAGE_SUCCESS)
 					{
 						/* ERROR */
-						HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_SET);
 					}
 					else
 					{
@@ -365,9 +345,9 @@ void StartBridgeTask(void const * argument)
 			McbMssg* pMcbSlaveMssg = (McbMssg*) MsgSlaveOut.value.p;
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_SET);
 
-//			sprintf(cString, "BRIDGE	Uart readed, addr: %d, cmd: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
-//					pMcbSlaveMssg->addr, pMcbSlaveMssg->cmd, pMcbSlaveMssg->data[0], pMcbSlaveMssg->data[1], pMcbSlaveMssg->data[2], pMcbSlaveMssg->data[3]);
-//			CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
+			sprintf(cString, "BRIDGE	Uart readed, addr: %d, cmd: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
+					pMcbSlaveMssg->addr, pMcbSlaveMssg->cmd, pMcbSlaveMssg->data[0], pMcbSlaveMssg->data[1], pMcbSlaveMssg->data[2], pMcbSlaveMssg->data[3]);
+			CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
 
 			osMessagePut(HspTxHandle, (uint32_t)pMcbSlaveMssg, osWaitForever);
 
@@ -377,9 +357,9 @@ void StartBridgeTask(void const * argument)
 			{
 				McbMssg* pMcbMasterMssg = (McbMssg*) MsgMasterOut.value.p;
 
-//				sprintf(cString, "BRIDGE Response	Uart readed, addr: %d, cmd: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
-//						pMcbMasterMssg->addr, pMcbMasterMssg->cmd, pMcbMasterMssg->data[0], pMcbMasterMssg->data[1], pMcbMasterMssg->data[2], pMcbMasterMssg->data[3]);
-//				CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
+				sprintf(cString, "BRIDGE Response	Uart readed, addr: %d, cmd: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
+						pMcbMasterMssg->addr, pMcbMasterMssg->cmd, pMcbMasterMssg->data[0], pMcbMasterMssg->data[1], pMcbMasterMssg->data[2], pMcbMasterMssg->data[3]);
+				CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
 
 				osMessagePut(UartSlaveRxHandle, (uint32_t)pMcbMasterMssg, osWaitForever);
 				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);

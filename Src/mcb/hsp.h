@@ -7,8 +7,6 @@
 #include "usart.h"
 #include "frame.h"
 
-#define SIZEOF_STATIC_FRAME_BYTES 12
-
 /** Hsp communication states */
 typedef enum
 {
@@ -41,7 +39,7 @@ typedef enum
 	SPI_BASED,
 	/** Uart interdace */
 	UART_BASED
-} EHspIntf;
+}EHspIntf;
 
 /** Hsp modes options */
 typedef enum
@@ -50,7 +48,7 @@ typedef enum
 	MASTER_MODE,
 	/** Slave mode */
 	SLAVE_MODE
-} EHspMode;
+}EHspMode;
 typedef struct EHspMode HspMode;
 
 typedef struct HspInst HspInst;

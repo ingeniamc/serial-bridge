@@ -13,22 +13,27 @@ mcb_init(McbInst* ptInst, EMcbIntf eIntf,
 	ptInst->eMode = eMode;
 	ptInst->eReqMode = eReqMode;
 
-	if (eIntf == MCB_OVER_SPI && eMode == MCB_MASTER)
+	EHspIntf eHspIntf;
+	if (eIntf == MCB_OVER_SPI)
 	{
-		hsp_init(&ptInst->Hsp, SPI_BASED, MASTER_MODE);
+		eHspIntf = SPI_BASED;
 	}
-	else if (eIntf == MCB_OVER_SPI && eMode == MCB_SLAVE)
+	else
 	{
-		hsp_init(&ptInst->Hsp, SPI_BASED, SLAVE_MODE);
+		eHspIntf = UART_BASED;
 	}
-	else if (eIntf == MCB_OVER_SERIAL && eMode == MCB_MASTER)
+
+	EHspMode eHspMode;
+	if (eMode == MCB_MASTER)
 	{
-		hsp_init(&ptInst->Hsp, UART_BASED, MASTER_MODE);
+		eHspMode = MASTER_MODE;
 	}
-	else if (eIntf == MCB_OVER_SERIAL && eMode == MCB_SLAVE)
+	else
 	{
-		hsp_init(&ptInst->Hsp, UART_BASED, SLAVE_MODE);
+		eHspMode = SLAVE_MODE;
 	}
+
+	hsp_init(&ptInst->Hsp, eHspIntf, eHspMode);
 }
 
 void mcb_deinit(McbInst* ptInst)
@@ -51,7 +56,6 @@ mcb_write(McbInst* ptInst, McbMssg *mcbMsg)
 	{
 		if (ptInst->eReqMode == MCB_BLOCKING)
 		{
-			sz = 4;
 			do
 			{
 				eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0], &sz);
@@ -59,7 +63,6 @@ mcb_write(McbInst* ptInst, McbMssg *mcbMsg)
 		}
 		else
 		{
-			sz = 4;
 			eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0], &sz);
 		}
 		if (eStatus == HSP_SUCCESS)
