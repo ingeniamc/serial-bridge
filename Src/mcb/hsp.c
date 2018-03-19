@@ -48,42 +48,44 @@ hsp_init(HspInst* ptInst, EHspIntf eIntf, EHspMode eMode)
 		  ptInst->phSpi = &hspi1;
 		  if (eMode == MASTER_MODE)
 		  {
+			  /* SPI Master mode */
 			  ptInst->write = &hsp_write_spi_master;
 			  ptInst->read = &hsp_read_spi_master;
 		  }
 		  else
 		  {
-//			  ptInst->write = &hsp_write_spi_slave;
-//			  ptInst->read = &hsp_read_spi_slave;
+			  /* SPI Slave mode */
+			  ptInst->write = NULL;
+			  ptInst->read = NULL;
 		  }
-		  ptInst->pu16Irq = &u16Irq;
-		  *ptInst->pu16Irq = 0;
 		  break;
 	  case UART_BASED:
 		  ptInst->phUsart = &huart2;
 		  if (eMode == MASTER_MODE)
 		  {
-//			  ptInst->write = &hsp_write_uart_master;
-//			  ptInst->read = &hsp_read_uart_master;
+			  /* UART Master mode */
+			  ptInst->write = NULL;
+			  ptInst->read = NULL;
 		  }
 		  else
 		  {
+			  /* UART Slave mode */
 			  ptInst->write = &hsp_write_uart_slave;
 			  ptInst->read = &hsp_read_uart_slave;
 		  }
-		  ptInst->pu16Irq = &u16Irq;
-		  *ptInst->pu16Irq = 0;
 		  break;
 	  default:
 		  /* Nothing */
 		  break;
 	  }
-
+	  ptInst->pu16Irq = &u16Irq;
+	  *ptInst->pu16Irq = 0;
 }
 
 void hsp_deinit(HspInst* ptInst)
 {
 	ptInst->phSpi = NULL;
+	ptInst->phUsart = NULL;
 	ptInst->write = NULL;
 	ptInst->read = NULL;
 	ptInst->pu16Irq = NULL;
@@ -147,7 +149,7 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 				   if(ptInst->sz > (HSP_FRM_STA_SZ + HSP_FRM_HEAD_SZ))
 				   {
 					   ptInst->sz -= HSP_FRM_STA_SZ;
-//					   data += HSP_FRM_STA_SZ;
+					   data += HSP_FRM_STA_SZ;
 					   frame_get_static_data(&(ptInst->Rxfrm), data);
 					   ptInst->eState = HSP_WRITE_REQUEST;
 				   }
@@ -215,9 +217,9 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 				   (frame_get_addr(&(ptInst->Rxfrm)) == *addr))
 			   {
 				   /* Copy read data to buffer - Also copy it in case of error msg */
-//				   size_t sz_tmp = frame_get_static_data(&(ptInst->Rxfrm), data);
-//				   data += sz_tmp;
-//				   *sz += sz_tmp;
+				   size_t sz_tmp = frame_get_static_data(&(ptInst->Rxfrm), data);
+				   data += sz_tmp;
+				   *sz += sz_tmp;
 				   *cmd = frame_get_cmd(&(ptInst->Rxfrm));
 				   if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_READ_ERROR)
 				   {
@@ -308,54 +310,26 @@ hsp_read_uart_slave(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 EHspStatus
 hsp_write_uart_slave(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data, size_t *sz)
 {
-    switch(ptInst->eState)
-    {
-    	case HSP_STANDBY:
-    		*ptInst->pu16Irq = 0;
-    		ptInst->sz = *sz;
-			ptInst->eState = HSP_WRITE_ANSWER;
-			break;
-       case HSP_WRITE_ANSWER:
-    	   *ptInst->pu16Irq = 0;
-    	   ptInst->sz = *sz;
-//    	   if(HAL_UART_GetState(ptInst->phUsart) == HAL_UART_STATE_BUSY_RX)
-//    	   {
-//    		   HAL_UART_AbortReceive(ptInst->phUsart);
-//    	   }
-//    	   if (HAL_UART_GetState(ptInst->phUsart) == HAL_UART_STATE_READY)
-//    	   {
-				frm_t frame;
-				frame_create(&frame, *addr, *cmd, HSP_FRM_NOTSEG, data, NULL, 0);
-				uint8_t u8Tmp;
-				for (int i = 0; i < SIZEOF_STATIC_FRAME_BYTES; i+=2)
-				{
-					u8Tmp = ((uint8_t*)frame.buf)[i];
-					((uint8_t*)frame.buf)[i] = ((uint8_t*)frame.buf)[i+1];
-					((uint8_t*)frame.buf)[i+1] = u8Tmp;
-				}
-				if (HAL_UART_Transmit_DMA(ptInst->phUsart, (uint8_t*)frame.buf, SIZEOF_STATIC_FRAME_BYTES) == HAL_OK)
-				{
-					ptInst->eState = HSP_SUCCESS;
-				}
-				else
-				{
-					ptInst->eState = HSP_STANDBY;
-				}
-//    	   }
-//    	   else
-//    	   {
-//    		   HAL_UART_StateTypeDef state = HAL_UART_GetState(ptInst->phUsart);
-//    		   if(state == HAL_UART_ERROR_DMA)
-//    		   {
-//    			   ptInst->eState = HSP_ERROR;
-//    		   }
-//    		   else ptInst->eState = HSP_STANDBY;
-//    	   }
-			break;
-		default:
-			ptInst->eState = HSP_STANDBY;
-			break;
-    }
+
+	*ptInst->pu16Irq = 0;
+	ptInst->sz = *sz;
+	frm_t frame;
+	frame_create(&frame, *addr, *cmd, HSP_FRM_NOTSEG, data, NULL, 0);
+	uint8_t u8Tmp;
+	for (int i = 0; i < SIZEOF_STATIC_FRAME_BYTES; i+=2)
+	{
+		u8Tmp = ((uint8_t*)frame.buf)[i];
+		((uint8_t*)frame.buf)[i] = ((uint8_t*)frame.buf)[i+1];
+		((uint8_t*)frame.buf)[i+1] = u8Tmp;
+	}
+	if (HAL_UART_Transmit_DMA(ptInst->phUsart, (uint8_t*)frame.buf, SIZEOF_STATIC_FRAME_BYTES) == HAL_OK)
+	{
+		ptInst->eState = HSP_SUCCESS;
+	}
+	else
+	{
+		ptInst->eState = HSP_STANDBY;
+	}
 
     return ptInst->eState;
 }
