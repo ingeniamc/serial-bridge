@@ -55,8 +55,7 @@
 #include <stdbool.h>
 #include "spi.h"
 #include "usart.h"
-#include "mcb/mcb_master.h"
-#include "mcb/mcb_slave.h"
+#include "mcb/mcb.h"
 #include "usbd_cdc_if.h"
 
 /* USER CODE END Includes */
@@ -235,8 +234,7 @@ void HspFunc(void const * argument)
 	osEvent MsgOut;
 	/** SPI initialization */
 	McbInst dvr_master;
-	mcb_master_init(&dvr_master, MCB_OVER_SPI, MCB_BLOCKING);
-	size_t sz;
+	mcb_init(&dvr_master, MCB_OVER_SPI, MCB_MASTER, MCB_BLOCKING);
 
 	/* Infinite loop */
 	for(;;)
@@ -253,14 +251,19 @@ void HspFunc(void const * argument)
 			switch (pMcbMssg->cmd)
 			{
 				case HSP_REQ_READ:
-					mcb_master_read(&dvr_master, pMcbMssg);
+					pMcbMssg->eStatus = mcb_read(&dvr_master, pMcbMssg);
 					break;
 				case HSP_REQ_WRITE:
-					pMcbMssg->eStatus = mcb_master_write(&dvr_master, pMcbMssg);
-				  break;
+					pMcbMssg->eStatus = mcb_write(&dvr_master, pMcbMssg);
+					break;
 				default:
 					/** Nothing */
-				  break;
+					break;
+			}
+
+			if (pMcbMssg->eStatus != MCB_MESSAGE_SUCCESS)
+			{
+				/* Error */
 			}
 
 			osMessagePut(HspRxHandle, (uint32_t)pMcbMssg, osWaitForever);
@@ -309,7 +312,7 @@ void StartMcbSlaveTask(void const * argument)
 	osEvent MsgOut;
 	uint32_t u32Millis = HAL_GetTick();
 	McbInst dvr_slave;
-	mcb_slave_init(&dvr_slave, MCB_OVER_SERIAL, MCB_NON_BLOCKING);
+	mcb_init(&dvr_slave, MCB_OVER_SERIAL, MCB_SLAVE, MCB_NON_BLOCKING);
 
 	McbMssg mcb_messg;
 //	/* Infinite loop */
@@ -318,7 +321,7 @@ void StartMcbSlaveTask(void const * argument)
 		if ((HAL_GetTick() - u32Millis) > 1)
 		{
 
-			if (mcb_slave_read(&dvr_slave, &mcb_messg) == MCB_MESSAGE_SUCCESS)
+			if (mcb_read(&dvr_slave, &mcb_messg) == MCB_MESSAGE_SUCCESS)
 			{
 				HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_SET);
 				osMessagePut(UartSlaveTxHandle, (uint32_t)&mcb_messg, osWaitForever);
@@ -327,11 +330,15 @@ void StartMcbSlaveTask(void const * argument)
 				if (MsgOut.status == osEventMessage)
 				{
 					McbMssg* pMcbSlaveMssg = (McbMssg*) MsgOut.value.p;
-					if (mcb_slave_write(&dvr_slave, pMcbSlaveMssg))
+					if (mcb_write(&dvr_slave, pMcbSlaveMssg) != MCB_MESSAGE_SUCCESS)
 					{
-
+						/* ERROR */
+						HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_SET);
 					}
-					HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_RESET);
+					else
+					{
+						HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_RESET);
+					}
 				}
 			}
 			u32Millis = HAL_GetTick();
@@ -358,9 +365,9 @@ void StartBridgeTask(void const * argument)
 			McbMssg* pMcbSlaveMssg = (McbMssg*) MsgSlaveOut.value.p;
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_SET);
 
-/*			sprintf(cString, "BRIDGE	Uart readed, addr: %d, cmd: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
-					pMcbSlaveMssg->addr, pMcbSlaveMssg->cmd, pMcbSlaveMssg->data[0], pMcbSlaveMssg->data[1], pMcbSlaveMssg->data[2], pMcbSlaveMssg->data[3]);
-			CDC_Transmit_FS((uint8_t*)cString, strlen(cString));*/
+//			sprintf(cString, "BRIDGE	Uart readed, addr: %d, cmd: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
+//					pMcbSlaveMssg->addr, pMcbSlaveMssg->cmd, pMcbSlaveMssg->data[0], pMcbSlaveMssg->data[1], pMcbSlaveMssg->data[2], pMcbSlaveMssg->data[3]);
+//			CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
 
 			osMessagePut(HspTxHandle, (uint32_t)pMcbSlaveMssg, osWaitForever);
 
@@ -370,9 +377,9 @@ void StartBridgeTask(void const * argument)
 			{
 				McbMssg* pMcbMasterMssg = (McbMssg*) MsgMasterOut.value.p;
 
-/*				sprintf(cString, "BRIDGE Response	Uart readed, addr: %d, cmd: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
-						pMcbMasterMssg->addr, pMcbMasterMssg->cmd, pMcbMasterMssg->data[0], pMcbMasterMssg->data[1], pMcbMasterMssg->data[2], pMcbMasterMssg->data[3]);
-				CDC_Transmit_FS((uint8_t*)cString, strlen(cString));*/
+//				sprintf(cString, "BRIDGE Response	Uart readed, addr: %d, cmd: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
+//						pMcbMasterMssg->addr, pMcbMasterMssg->cmd, pMcbMasterMssg->data[0], pMcbMasterMssg->data[1], pMcbMasterMssg->data[2], pMcbMasterMssg->data[3]);
+//				CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
 
 				osMessagePut(UartSlaveRxHandle, (uint32_t)pMcbMasterMssg, osWaitForever);
 				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);
