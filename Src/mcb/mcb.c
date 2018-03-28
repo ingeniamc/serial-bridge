@@ -58,7 +58,7 @@ mcb_write(McbInst* ptInst, McbMssg *mcbMsg)
 		{
 			do
 			{
-				eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0], &sz);
+				eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0], &mcbMsg->size);
 			}while(eStatus != HSP_ERROR && eStatus != HSP_SUCCESS);
 		}
 		else
@@ -73,6 +73,7 @@ mcb_write(McbInst* ptInst, McbMssg *mcbMsg)
 		{
 			eResult = MCB_MESSAGE_ERROR;
 		}
+		mcbMsg->size = 4;
 	}
 	else
 	{
@@ -87,7 +88,6 @@ mcb_read(McbInst* ptInst, McbMssg *mcbMsg)
 {
 	EMcbMssgStatus eResult = 0;
 	EHspStatus eStatus = HSP_ERROR;
-	size_t sz;
 
 	if (ptInst->isCyclic == false)
 	{
@@ -95,13 +95,13 @@ mcb_read(McbInst* ptInst, McbMssg *mcbMsg)
 		{
 			do
 			{
-				size_t sRead;
-				eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0], &sRead);
+				eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0]);
 			}while(eStatus != HSP_ERROR && eStatus != HSP_SUCCESS);
+			mcbMsg->size = ptInst->Hsp.sz;
 		}
 		else
 		{
-			eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0], &sz);
+			eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0]);
 		}
 
 		if (eStatus == HSP_SUCCESS)

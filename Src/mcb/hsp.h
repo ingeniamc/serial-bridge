@@ -20,16 +20,22 @@ typedef enum
 	HSP_WRITE_REQUEST_ACK,
 	/** Processing answer from write request */
 	HSP_WRITE_ANSWER,
+	/** Processing write */
+	HSP_WRITE_ANSWER_PENDING,
 	/** Sending a read request */
 	HSP_READ_REQUEST,
 	/** Waiting for read request ack */
 	HSP_READ_REQUEST_ACK,
 	/** Processing answer from read request */
 	HSP_READ_ANSWER,
+	/** Processing request */
+	HSP_READ_REQUEST_PENDING,
 	/** Waiting and processing slave cyclic frame */
 	HSP_CYCLIC_ANSWER,
-	/** Transmission error */
-	HSP_ERROR
+	/** Transaction error */
+	HSP_ERROR,
+	/** Transaction CRC error */
+	HSP_CRC_ERROR
 }EHspStatus;
 
 /** Hsp interfaces options */
@@ -72,10 +78,11 @@ struct HspInst
     frm_t Rxfrm;
 	/** Pending data size to be transmitted/received */
 	size_t sz;
+	uint16_t u16Pending;
 	/** Write frame */
 	EHspStatus (*write)(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data, size_t *sz);
 	/** Read frame */
-	EHspStatus (*read)(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data, size_t *sz);
+	EHspStatus (*read)(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data);
 };
 
 /** Initialize a High speed protocol interface */

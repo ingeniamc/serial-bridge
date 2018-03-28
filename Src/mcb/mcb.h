@@ -53,6 +53,7 @@ typedef struct
 {
 	uint16_t addr;
 	uint16_t cmd;
+	size_t 	 size;
 	uint16_t data[HSP_MAX_DATA_SZ];
 	EMcbMssgStatus eStatus;
 }McbMssg;

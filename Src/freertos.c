@@ -171,7 +171,7 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of HspTask */
-  osThreadStaticDef(HspTask, HspFunc, osPriorityAboveNormal, 0, 256, HspBuffer, &HspControlBlock);
+  osThreadStaticDef(HspTask, HspFunc, osPriorityLow, 0, 256, HspBuffer, &HspControlBlock);
   HspTaskHandle = osThreadCreate(osThread(HspTask), NULL);
 
   /* definition and creation of UserTask */
@@ -179,11 +179,11 @@ void MX_FREERTOS_Init(void) {
   UserTaskHandle = osThreadCreate(osThread(UserTask), NULL);
 
   /* definition and creation of McbSlaveTask */
-  osThreadStaticDef(McbSlaveTask, StartMcbSlaveTask, osPriorityRealtime, 0, 1024, McbSlaveTaskBuffer, &McbSlaveTaskControlBlock);
+  osThreadStaticDef(McbSlaveTask, StartMcbSlaveTask, osPriorityBelowNormal, 0, 1024, McbSlaveTaskBuffer, &McbSlaveTaskControlBlock);
   McbSlaveTaskHandle = osThreadCreate(osThread(McbSlaveTask), NULL);
 
   /* definition and creation of BridgeTask */
-  osThreadStaticDef(BridgeTask, StartBridgeTask, osPriorityHigh, 0, 1024, BridgeTaskBuffer, &BridgeTaskControlBlock);
+  osThreadStaticDef(BridgeTask, StartBridgeTask, osPriorityLow, 0, 1024, BridgeTaskBuffer, &BridgeTaskControlBlock);
   BridgeTaskHandle = osThreadCreate(osThread(BridgeTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -255,6 +255,7 @@ void HspFunc(void const * argument)
 					break;
 				case HSP_REQ_WRITE:
 					pMcbMssg->eStatus = mcb_write(&dvrMaster, pMcbMssg);
+					pMcbMssg->size = 4;
 					break;
 				default:
 					/** Nothing */
@@ -293,7 +294,7 @@ void StartMcbSlaveTask(void const * argument)
 	osEvent MsgOut;
 	uint32_t u32Millis = HAL_GetTick();
 	McbInst dvrSlave;
-	mcb_init(&dvrSlave, MCB_OVER_SERIAL, MCB_SLAVE, MCB_NON_BLOCKING);
+	mcb_init(&dvrSlave, MCB_OVER_SERIAL, MCB_SLAVE, MCB_BLOCKING);
 
 	McbMssg mcbMessg;
 	/* Infinite loop */
@@ -345,9 +346,12 @@ void StartBridgeTask(void const * argument)
 			McbMssg* pMcbSlaveMssg = (McbMssg*) MsgSlaveOut.value.p;
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_SET);
 
-			sprintf(cString, "BRIDGE	Uart readed, addr: %d, cmd: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
-					pMcbSlaveMssg->addr, pMcbSlaveMssg->cmd, pMcbSlaveMssg->data[0], pMcbSlaveMssg->data[1], pMcbSlaveMssg->data[2], pMcbSlaveMssg->data[3]);
-			CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
+//			for(int i = 0; i < pMcbSlaveMssg->size; i+=4)
+//			{
+//				sprintf(cString, "BRIDGE	Uart readed, addr: %d, cmd: %d, i: %d, size: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
+//						pMcbSlaveMssg->addr, pMcbSlaveMssg->cmd, i, pMcbSlaveMssg->size, pMcbSlaveMssg->data[i+0], pMcbSlaveMssg->data[i+1], pMcbSlaveMssg->data[i+2], pMcbSlaveMssg->data[i+3]);
+//				CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
+//			}
 
 			osMessagePut(HspTxHandle, (uint32_t)pMcbSlaveMssg, osWaitForever);
 
@@ -357,9 +361,12 @@ void StartBridgeTask(void const * argument)
 			{
 				McbMssg* pMcbMasterMssg = (McbMssg*) MsgMasterOut.value.p;
 
-				sprintf(cString, "BRIDGE Response	Uart readed, addr: %d, cmd: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
-						pMcbMasterMssg->addr, pMcbMasterMssg->cmd, pMcbMasterMssg->data[0], pMcbMasterMssg->data[1], pMcbMasterMssg->data[2], pMcbMasterMssg->data[3]);
-				CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
+//				for(int i = 0; i < pMcbMasterMssg->size; i+=4)
+//				{
+//					sprintf(cString, "BRIDGE Response	Uart readed, addr: %d, cmd: %d, i: %d, size: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
+//							pMcbMasterMssg->addr, pMcbMasterMssg->cmd, i, pMcbMasterMssg->size, pMcbMasterMssg->data[i+0], pMcbMasterMssg->data[i+1], pMcbMasterMssg->data[i+2], pMcbMasterMssg->data[i+3]);
+//					CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
+//				}
 
 				osMessagePut(UartSlaveRxHandle, (uint32_t)pMcbMasterMssg, osWaitForever);
 				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);
