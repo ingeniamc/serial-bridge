@@ -45,10 +45,10 @@ void mcb_deinit(McbInst* ptInst)
 	hsp_deinit(&ptInst->Hsp);
 }
 
-EMcbMssgStatus
-mcb_write(McbInst* ptInst, McbMssg *mcbMsg)
+EMcbMsgStatus
+mcb_write(McbInst* ptInst, McbMsg *mcbMsg)
 {
-	EMcbMssgStatus eResult = MCB_MESSAGE_ERROR;
+	EMcbMsgStatus eResult = MCB_MESSAGE_ERROR;
 	EHspStatus eStatus;
 	size_t sz;
 
@@ -59,7 +59,7 @@ mcb_write(McbInst* ptInst, McbMssg *mcbMsg)
 			do
 			{
 				eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0], &mcbMsg->size);
-			}while(eStatus != HSP_ERROR && eStatus != HSP_SUCCESS);
+			}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS));
 		}
 		else
 		{
@@ -83,10 +83,10 @@ mcb_write(McbInst* ptInst, McbMssg *mcbMsg)
 	return eResult;
 }
 
-EMcbMssgStatus
-mcb_read(McbInst* ptInst, McbMssg *mcbMsg)
+EMcbMsgStatus
+mcb_read(McbInst* ptInst, McbMsg *mcbMsg)
 {
-	EMcbMssgStatus eResult = 0;
+	EMcbMsgStatus eResult = 0;
 	EHspStatus eStatus = HSP_ERROR;
 
 	if (ptInst->isCyclic == false)
@@ -96,7 +96,7 @@ mcb_read(McbInst* ptInst, McbMssg *mcbMsg)
 			do
 			{
 				eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0]);
-			}while(eStatus != HSP_ERROR && eStatus != HSP_SUCCESS);
+			}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS));
 			mcbMsg->size = ptInst->Hsp.sz;
 		}
 		else
@@ -118,8 +118,14 @@ mcb_read(McbInst* ptInst, McbMssg *mcbMsg)
 		/* Cyclic mode */
 	}
 
-	if (eStatus == HSP_SUCCESS) eResult = MCB_MESSAGE_SUCCESS;
-	else eResult = MCB_MESSAGE_ERROR;
+	if (eStatus == HSP_SUCCESS)
+	{
+		eResult = MCB_MESSAGE_SUCCESS;
+	}
+	else
+	{
+		eResult = MCB_MESSAGE_ERROR;
+	}
 
 	return eResult;
 }
@@ -139,10 +145,10 @@ int32_t mcb_enable_cyclic(McbInst* ptInst)
 	int32_t i32Result = 0;
 	EHspStatus eStatus;
 
-	if (ptInst->isCyclic == false && ptInst->eMode == MCB_MASTER)
+	if ((ptInst->isCyclic == false) && (ptInst->eMode == MCB_MASTER))
 	{
 		size_t sz;
-		McbMssg mcbMsg;
+		McbMsg mcbMsg;
 		mcbMsg.addr = 0x640;
 		mcbMsg.cmd = 1;
 		// TODO memcpy
@@ -154,7 +160,7 @@ int32_t mcb_enable_cyclic(McbInst* ptInst)
 		do
 		{
 			eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg.addr, &mcbMsg.cmd, &mcbMsg.data[0], &sz);
-		}while(eStatus != HSP_ERROR && eStatus != HSP_SUCCESS);
+		}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS));
 	}
 
 	return i32Result;

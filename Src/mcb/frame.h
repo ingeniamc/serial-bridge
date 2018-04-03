@@ -21,7 +21,7 @@
 /** Ingenia protocol frame CRC size */
 #define HSP_FRM_CRC_SZ          1U
 
-#define HSP_FRM_STATIC_SIZE_BYTES (HSP_FRM_HEAD_SZ + HSP_FRM_STA_SZ + HSP_FRM_CRC_SZ)*2
+#define HSP_FRM_STATIC_SIZE_BYTES ((HSP_FRM_HEAD_SZ + HSP_FRM_STA_SZ + HSP_FRM_CRC_SZ) * 2)
 
 /** Ingenia protocol static function requests/replies */
 /** Read request */

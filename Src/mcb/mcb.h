@@ -22,16 +22,21 @@ typedef enum
 
 typedef enum
 {
+	/* Blocking mode, each request block until response */
 	MCB_BLOCKING,
+	/* Non Blocking mode, if not ready, return state */
 	MCB_NON_BLOCKING
 }EMcbRequestMode;
 
 typedef enum
 {
+	/* Message not ready */
 	MCB_MESSAGE_NOT_READY,
+	/* Success request */
 	MCB_MESSAGE_SUCCESS,
+	/* Request error */
 	MCB_MESSAGE_ERROR
-}EMcbMssgStatus;
+}EMcbMsgStatus;
 
 /** Motion control but instance */
 typedef struct
@@ -48,15 +53,20 @@ typedef struct
 	EMcbRequestMode eReqMode;
 }McbInst;
 
-/** Motion control but instance */
+/** Frame data struct */
 typedef struct
 {
+	/* Address data */
 	uint16_t addr;
+	/* Command data */
 	uint16_t cmd;
+	/* Message total size (bytes) */
 	size_t 	 size;
+	/* Static data */
 	uint16_t data[HSP_MAX_DATA_SZ];
-	EMcbMssgStatus eStatus;
-}McbMssg;
+	/* Message status */
+	EMcbMsgStatus eStatus;
+}McbMsg;
 
 /** Initialization functions */
 void mcb_init(McbInst* ptInst, EMcbIntf eIntf,
@@ -64,8 +74,8 @@ void mcb_init(McbInst* ptInst, EMcbIntf eIntf,
 void mcb_deinit(McbInst* ptInst);
 
 /** Generic read write functions */
-EMcbMssgStatus mcb_write(McbInst* ptInst,  McbMssg *mcbMsg);
-EMcbMssgStatus mcb_read(McbInst* ptInst, McbMssg *mcbMsg);
+EMcbMsgStatus mcb_write(McbInst* ptInst, McbMsg *mcbMsg);
+EMcbMsgStatus mcb_read(McbInst* ptInst, McbMsg *mcbMsg);
 
 /** Motion read/write functions */
 
@@ -74,7 +84,7 @@ void* mcb_tx_map(McbInst* ptInst, uint16_t addr, size_t sz);
 void* mcb_rx_map(McbInst* ptInst, uint16_t addr, size_t sz);
 
 /** Enabling cyclic mode.
- * Blocking function, while the config is writted into driver. */
+ * Blocking function, while the config is written into driver. */
 int32_t mcb_enable_cyclic(McbInst* ptInst);
 /** Disable cyclic mode. */
 int32_t mcb_disable_cyclic(McbInst* ptInst);
