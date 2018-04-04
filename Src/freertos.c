@@ -220,10 +220,10 @@ void StartDefaultTask(void const * argument)
 
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+  	  for(;;)
+  	  {
+  		  osDelay(1);
+  	  }
   /* USER CODE END StartDefaultTask */
 }
 
@@ -254,8 +254,9 @@ void HspFunc(void const * argument)
 					pMcbMsg->eStatus = mcb_read(&dvrMaster, pMcbMsg);
 					break;
 				case HSP_REQ_WRITE:
+				case HSP_REQ_CLOSE:
+				case HSP_REQ_CPU_CHANGE:
 					pMcbMsg->eStatus = mcb_write(&dvrMaster, pMcbMsg);
-					pMcbMsg->size = 4;
 					break;
 				default:
 					/** Nothing */
@@ -292,30 +293,35 @@ void StartMcbSlaveTask(void const * argument)
 {
 	/* USER CODE BEGIN StartMcbSlaveTask */
 	osEvent MsgOut;
+	McbMsg mcbMsg;
 	McbInst dvrSlave;
 	mcb_init(&dvrSlave, MCB_OVER_SERIAL, MCB_SLAVE, MCB_BLOCKING);
 
-	McbMsg mcbMessg;
+	HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_RESET);
 	/* Infinite loop */
 	for(;;)
 	{
 		/* Chek for incoming uart message*/
-		if (mcb_read(&dvrSlave, &mcbMessg) == MCB_MESSAGE_SUCCESS)
+		if (mcb_read(&dvrSlave, &mcbMsg) == MCB_MESSAGE_SUCCESS)
 		{
-			HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_SET);
-			osMessagePut(UartSlaveTxHandle, (uint32_t)&mcbMessg, osWaitForever);
+			osMessagePut(UartSlaveTxHandle, (uint32_t)&mcbMsg, osWaitForever);
 
 			MsgOut = osMessageGet(UartSlaveRxHandle, osWaitForever);
 			if (MsgOut.status == osEventMessage)
 			{
 				McbMsg* pMcbSlaveMssg = (McbMsg*) MsgOut.value.p;
-				if (mcb_write(&dvrSlave, pMcbSlaveMssg) != MCB_MESSAGE_SUCCESS)
+				if (pMcbSlaveMssg->eStatus == MCB_MESSAGE_SUCCESS)
 				{
-					/* ERROR */
+					if (mcb_write(&dvrSlave, pMcbSlaveMssg) != MCB_MESSAGE_SUCCESS)
+					{
+						/* ERROR */
+					}
 				}
 				else
 				{
-					HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_RESET);
+					/** Enable Orange led when driver comm fails */
+					HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_SET);
+					osDelay(10000);
 				}
 			}
 		}
@@ -341,10 +347,10 @@ void StartBridgeTask(void const * argument)
 			McbMsg* pMcbSlaveMsg = (McbMsg*) MsgSlaveOut.value.p;
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_SET);
 
-//			for(int i = 0; i < pMcbSlaveMssg->size; i+=4)
+//			for(int i = 0; i < pMcbSlaveMsg->size; i+=4)
 //			{
 //				sprintf(cString, "BRIDGE	Uart readed, addr: %d, cmd: %d, i: %d, size: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
-//						pMcbSlaveMssg->addr, pMcbSlaveMssg->cmd, i, pMcbSlaveMssg->size, pMcbSlaveMssg->data[i+0], pMcbSlaveMssg->data[i+1], pMcbSlaveMssg->data[i+2], pMcbSlaveMssg->data[i+3]);
+//						pMcbSlaveMsg->addr, pMcbSlaveMsg->cmd, i, pMcbSlaveMsg->size, pMcbSlaveMsg->data[i+0], pMcbSlaveMsg->data[i+1], pMcbSlaveMsg->data[i+2], pMcbSlaveMsg->data[i+3]);
 //				CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
 //			}
 
@@ -354,16 +360,16 @@ void StartBridgeTask(void const * argument)
 
 			if (MsgMasterOut.status == osEventMessage)
 			{
-				McbMsg* pMcbMasterMssg = (McbMsg*) MsgMasterOut.value.p;
+				McbMsg* pMcbMasterMsg = (McbMsg*) MsgMasterOut.value.p;
 
-//				for(int i = 0; i < pMcbMasterMssg->size; i+=4)
+//				for(int i = 0; i < pMcbMasterMsg->size; i+=4)
 //				{
 //					sprintf(cString, "BRIDGE Response	Uart readed, addr: %d, cmd: %d, i: %d, size: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
-//							pMcbMasterMssg->addr, pMcbMasterMssg->cmd, i, pMcbMasterMssg->size, pMcbMasterMssg->data[i+0], pMcbMasterMssg->data[i+1], pMcbMasterMssg->data[i+2], pMcbMasterMssg->data[i+3]);
+//							pMcbMasterMsg->addr, pMcbMasterMsg->cmd, i, pMcbMasterMsg->size, pMcbMasterMsg->data[i+0], pMcbMasterMsg->data[i+1], pMcbMasterMsg->data[i+2], pMcbMasterMsg->data[i+3]);
 //					CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
 //				}
 
-				osMessagePut(UartSlaveRxHandle, (uint32_t)pMcbMasterMssg, osWaitForever);
+				osMessagePut(UartSlaveRxHandle, (uint32_t)pMcbMasterMsg, osWaitForever);
 				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);
 			}
 		}

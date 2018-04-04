@@ -73,7 +73,6 @@ mcb_write(McbInst* ptInst, McbMsg *mcbMsg)
 		{
 			eResult = MCB_MESSAGE_ERROR;
 		}
-		mcbMsg->size = 4;
 	}
 	else
 	{
@@ -96,7 +95,7 @@ mcb_read(McbInst* ptInst, McbMsg *mcbMsg)
 			do
 			{
 				eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0]);
-			}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS));
+			}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS) && (eStatus != HSP_CRC_ERROR));
 			mcbMsg->size = ptInst->Hsp.sz;
 		}
 		else

@@ -109,12 +109,12 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 			/* Check if static transmission should be segmented */
 			if (ptInst->sz > HSP_FRM_STA_SZ)
 			{
-				frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_WRITE, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0);
+				frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0);
 				ptInst->u16Pending = 1;
 			}
 			else
 			{
-				frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_WRITE, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0);
+				frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0);
 			}
 			if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY))
 			{
@@ -126,7 +126,7 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 				hsp_spi_transfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
 				if (ptInst->sz >= HSP_FRM_STA_SZ)
 				{
-					frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_WRITE, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0);
+					frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0);
 				}
 				else
 				{
@@ -156,30 +156,27 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 		/** Wait until data is received */
 		if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY) && (*ptInst->pu16Irq == 1))
 		{
-			/* Delay to allow finish the CRC process */
-			osDelay(1);
 			/* Check reception */
 			if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) &&
 					(frame_get_addr(&(ptInst->Rxfrm)) == *addr))
 			{
-				*cmd = frame_get_cmd(&(ptInst->Rxfrm));
 				if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_WRITE_ERROR)
 				{
+					*cmd = frame_get_cmd(&(ptInst->Rxfrm));
 					ptInst->eState = HSP_ERROR;
 				}
 				else if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_ACK)
 				{
-					ptInst->eState = HSP_SUCCESS;
 					if (ptInst->u16Pending)
 					{
 						/* Prepare next frame */
 						if (ptInst->sz > HSP_FRM_STA_SZ)
 						{
-							frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_WRITE, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0);
+							frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0);
 						}
 						else if (ptInst->sz == HSP_FRM_STA_SZ)
 						{
-							frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_WRITE, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0);
+							frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0);
 						}
 						else
 						{
@@ -188,6 +185,12 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 							frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0);
 						}
 						ptInst->eState = HSP_WRITE_REQUEST_ACK;
+					}
+					else
+					{
+						*cmd = frame_get_cmd(&(ptInst->Rxfrm));
+						ptInst->eState = HSP_SUCCESS;
+						*sz = 4;
 					}
 			   }
 			   else

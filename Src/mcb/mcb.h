@@ -9,21 +9,21 @@
 /** Available interfaces */
 typedef enum
 {
-	MCB_OVER_SPI,
+	MCB_OVER_SPI = 0,
 	MCB_OVER_SERIAL
 }EMcbIntf;
 
 /** Available interfaces */
 typedef enum
 {
-	MCB_MASTER,
+	MCB_MASTER = 0,
 	MCB_SLAVE
 }EMcbMode;
 
 typedef enum
 {
 	/* Blocking mode, each request block until response */
-	MCB_BLOCKING,
+	MCB_BLOCKING = 0,
 	/* Non Blocking mode, if not ready, return state */
 	MCB_NON_BLOCKING
 }EMcbRequestMode;
@@ -31,7 +31,7 @@ typedef enum
 typedef enum
 {
 	/* Message not ready */
-	MCB_MESSAGE_NOT_READY,
+	MCB_MESSAGE_NOT_READY = 0,
 	/* Success request */
 	MCB_MESSAGE_SUCCESS,
 	/* Request error */
