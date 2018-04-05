@@ -11,7 +11,7 @@
 static uint16_t u16Irq;
 
 static void
-hsp_spi_transfer(const HspInst* ptInst, frm_t *in, frm_t *out);
+hsp_spi_transfer(const HspInst* ptInst, TFrame *in, TFrame *out);
 
 /** Read a static data */
 static EHspStatus
@@ -31,7 +31,7 @@ static EHspStatus
 hsp_cyclic_spi_tranfer(HspInst* ptInst, uint16_t *in_buf, uint16_t *out_buf);
 
 static void
-hsp_spi_transfer(const HspInst* ptInst, frm_t *in, frm_t *out)
+hsp_spi_transfer(const HspInst* ptInst, TFrame *in, TFrame *out)
 {
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
 	HAL_SPI_TransmitReceive_DMA(ptInst->phSpi, (uint8_t*)in->buf, (uint8_t*)out->buf, in->sz);
@@ -109,12 +109,12 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 			/* Check if static transmission should be segmented */
 			if (ptInst->sz > HSP_FRM_STA_SZ)
 			{
-				frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0);
+				frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0, false);
 				ptInst->u16Pending = 1;
 			}
 			else
 			{
-				frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0);
+				frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0, false);
 			}
 			if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY))
 			{
@@ -126,13 +126,13 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 				hsp_spi_transfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
 				if (ptInst->sz >= HSP_FRM_STA_SZ)
 				{
-					frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0);
+					frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0, false);
 				}
 				else
 				{
 					/* Note: We prepare the next frame before the activation of the IRQ to
 					 * improve the timing of the system */
-					frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0);
+					frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
 				}
 				ptInst->eState = HSP_WRITE_REQUEST_ACK;
 			}
@@ -172,17 +172,17 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 						/* Prepare next frame */
 						if (ptInst->sz > HSP_FRM_STA_SZ)
 						{
-							frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0);
+							frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0, false);
 						}
 						else if (ptInst->sz == HSP_FRM_STA_SZ)
 						{
-							frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0);
+							frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0, false);
 						}
 						else
 						{
 							/* Dummy message, allow reception of last frame CRC */
 							ptInst->u16Pending = 0;
-							frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0);
+							frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
 						}
 						ptInst->eState = HSP_WRITE_REQUEST_ACK;
 					}
@@ -225,13 +225,13 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 			if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
 			{
 				/* Send read request */
-				frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_READ, HSP_FRM_NOTSEG, data, NULL, 0);
+				frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_READ, HSP_FRM_NOTSEG, data, NULL, 0, false);
 				*ptInst->pu16Irq = 0;
 				hsp_spi_transfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
 				ptInst->sz = 0;
 				/* Note: We prepare the next frame before checking the IRQ to improve
 				* the timing of the system */
-				frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0);
+				frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
 				ptInst->eState = HSP_READ_REQUEST_ACK;
 			}
 		break;
@@ -304,33 +304,41 @@ hsp_read_uart_slave(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
     	case HSP_READ_REQUEST_PENDING:
 			if (HAL_UART_GetState(ptInst->phUsart) == HAL_UART_STATE_READY)
 			{
-				frm_t frame;
-				if (HAL_UART_Receive(ptInst->phUsart, (uint8_t*)frame.buf,
-						HSP_FRM_STATIC_SIZE_BYTES, 100) == HAL_OK)
+				TFrame tFrame;
+				tFrame.sz = HSP_FRM_STATIC_SIZE_BYTES/2;
+				if (HAL_UART_Receive(ptInst->phUsart, (uint8_t*)tFrame.buf,
+						(tFrame.sz * 2), 100) == HAL_OK)
 				{
 					uint16_t u16Tmp;
-					for (int i = 0; i < HSP_FRM_STATIC_SIZE_BYTES/2; i++)
+					for (int i = 0; i < tFrame.sz; i++)
 					{
-						u16Tmp = frame.buf[i];
-						frame.buf[i] = ((u16Tmp & 0x00ff) << 8) |
+						u16Tmp = tFrame.buf[i];
+						tFrame.buf[i] = ((u16Tmp & 0x00ff) << 8) |
 								((u16Tmp & 0xff00) >> 8);
 					}
-					// TODO Check CRC
-					*addr = frame_get_addr(&frame);
-					*cmd = frame_get_cmd(&frame);
-					ptInst->sz += frame_get_static_data(&frame, &ptInst->Rxfrm.buf[ptInst->sz]);
-					if (frame_get_segmented(&frame))
+					if (FrameCheckCRC(&tFrame))
 					{
-						if (ptInst->sz > (size_t)HSP_FRM_MAX_DATA_SZ)
+						*addr = frame_get_addr(&tFrame);
+						*cmd = frame_get_cmd(&tFrame);
+						ptInst->sz += frame_get_static_data(&tFrame, &ptInst->Rxfrm.buf[ptInst->sz]);
+						if (frame_get_segmented(&tFrame))
 						{
-							ptInst->eState = HSP_ERROR;
+							if (ptInst->sz > (size_t)HSP_FRM_MAX_DATA_SZ)
+							{
+								ptInst->eState = HSP_ERROR;
+							}
+							ptInst->eState = HSP_READ_REQUEST_PENDING;
 						}
-						ptInst->eState = HSP_READ_REQUEST_PENDING;
+						else
+						{
+							memcpy(data, ptInst->Rxfrm.buf, ptInst->sz*2);
+							ptInst->eState = HSP_SUCCESS;
+						}
 					}
 					else
 					{
-						memcpy(data, ptInst->Rxfrm.buf, ptInst->sz*2);
-						ptInst->eState = HSP_SUCCESS;
+						/** CRC Error */
+						ptInst->eState = HSP_ERROR;
 					}
 				}
 				else
@@ -385,23 +393,23 @@ hsp_write_uart_slave(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 		case HSP_WRITE_ANSWER_PENDING:
 		{
 			*ptInst->pu16Irq = 0;
-			frm_t frame;
+			TFrame tFrame;
 			if (*sz <= 4)
 			{
-				frame_create(&frame, *addr, *cmd, HSP_FRM_NOTSEG, &data[ptInst->sz-*sz], NULL, 0);
+				frame_create(&tFrame, *addr, *cmd, HSP_FRM_NOTSEG, &data[ptInst->sz-*sz], NULL, 0, true);
 			}
 			else
 			{
-				frame_create(&frame, *addr, *cmd, HSP_FRM_SEG, &data[ptInst->sz-*sz], NULL, 0);
+				frame_create(&tFrame, *addr, *cmd, HSP_FRM_SEG, &data[ptInst->sz-*sz], NULL, 0, true);
 			}
 			uint8_t u8Tmp;
 			for (int i = 0; i < HSP_FRM_STATIC_SIZE_BYTES; i+=2)
 			{
-				u8Tmp = ((uint8_t*)frame.buf)[i];
-				((uint8_t*)frame.buf)[i] = ((uint8_t*)frame.buf)[i+1];
-				((uint8_t*)frame.buf)[i+1] = u8Tmp;
+				u8Tmp = ((uint8_t*)tFrame.buf)[i];
+				((uint8_t*)tFrame.buf)[i] = ((uint8_t*)tFrame.buf)[i+1];
+				((uint8_t*)tFrame.buf)[i+1] = u8Tmp;
 			}
-			if (HAL_UART_Transmit(ptInst->phUsart, (uint8_t*)frame.buf,
+			if (HAL_UART_Transmit(ptInst->phUsart, (uint8_t*)tFrame.buf,
 					HSP_FRM_STATIC_SIZE_BYTES, 100) == HAL_OK)
 			{
 				ptInst->eState = HSP_SUCCESS;
@@ -428,7 +436,7 @@ EHspStatus hsp_cyclic_spi_tranfer(HspInst* ptInst, uint16_t *in_buf, uint16_t *o
 		/* Wait fall IRQ indicating received data */
 		if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
 		{
-			frame_create(&(ptInst->Rxfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, in_buf, out_buf, 3);
+			frame_create(&(ptInst->Rxfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, in_buf, out_buf, 3, false);
 
      	    ptInst->eState = HSP_CYCLIC_ANSWER;
             /* Now we just need to send the already built frame */

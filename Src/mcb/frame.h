@@ -50,12 +50,12 @@
 typedef struct {
     uint16_t       buf[HSP_FRM_MAX_DATA_SZ];
     uint16_t       sz;
-}frm_t;
+}TFrame;
 
 /**
  * Initialises an Ingenia High Speed Protocol frame.
  *
- * @param [in/out] frm
+ * @param [in/out] TFrame
  *      Destination frame
  * @param [in] addr
  *      Destination address.
@@ -72,47 +72,59 @@ typedef struct {
  * @return 0 success, error code otherwise
  */
 IER_RET
-frame_create(frm_t *frm, uint16_t addr, uint8_t cmd, uint8_t segmented,
-           	 const void *sta_buf, const void *dyn_buff, size_t dyn_sz);
+frame_create(TFrame *tFrame, uint16_t u16Addr, uint8_t u8Cmd, uint8_t u8Pending,
+           	 const void *pStaBuf, const void *pDynBuf, size_t szDyn, bool calcCRC);
 
 /**
  * Returns the address of the static data.
  *
- * @param [in] frm
+ * @param [in] TFrame
  *      Input frame.
  * @return Address.
  */
 uint16_t
-frame_get_addr(const frm_t *frm);
+frame_get_addr(const TFrame *frm);
 
 /**
  * Returns the command (request or reply) of the static data.
  *
- * @param [in] frm
+ * @param [in] TFrame
  *      Input frame.
  * @return Command.
  */
 uint8_t
-frame_get_cmd(const frm_t *frm);
+frame_get_cmd(const TFrame *frm);
 
 /**
  * Checks if the static data is segmented and requires further data.
  *
- * @param [in] frm
+ * @param [in] TFrame
  *      Input frame.
  * @return true if static data is segmented.
  */
 bool
-frame_get_segmented(const frm_t *frm);
+frame_get_segmented(const TFrame *frm);
 
 /**
  * Returns the static data of a frame.
  *
- * @param [in] frm
+ * @param [in] TFrame
  *      Input frame.
  * @return Static data
  */
 uint16_t
-frame_get_static_data(const frm_t *frm, uint16_t *buf);
+frame_get_static_data(const TFrame *frm, uint16_t *buf);
+
+/**
+ * Indicates if the crc for the input frame is correct
+ *
+ * @param[in] TFrame
+ *  Input frame
+ *
+ * @return true if crc is correct
+ *         false if crc is wrong
+ */
+bool
+FrameCheckCRC(const TFrame *frm);
 
 #endif

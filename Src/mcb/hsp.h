@@ -73,9 +73,9 @@ struct HspInst
 	/** Pointer to uart struct */
 	UART_HandleTypeDef* phUsart;
 	/** Frame pool for holding tx data */
-	frm_t Txfrm;
+	TFrame Txfrm;
 	/** Frame pool for holding rx data */
-    frm_t Rxfrm;
+    TFrame Rxfrm;
 	/** Pending data size to be transmitted/received */
 	size_t sz;
 	uint16_t u16Pending;
