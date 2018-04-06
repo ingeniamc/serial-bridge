@@ -11,7 +11,7 @@
 typedef enum
 {
 	/** Transmission successful */
-	HSP_SUCCESS,
+	HSP_SUCCESS = 0,
 	/** Bus in stand by */
 	HSP_STANDBY,
 	/** Sending a write request */
