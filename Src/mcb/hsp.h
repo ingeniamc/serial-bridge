@@ -34,8 +34,6 @@ typedef enum
 	HSP_CYCLIC_ANSWER,
 	/** Transaction error */
 	HSP_ERROR,
-	/** Transaction CRC error */
-	HSP_CRC_ERROR
 }EHspStatus;
 
 /** Hsp interfaces options */

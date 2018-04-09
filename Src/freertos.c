@@ -220,10 +220,10 @@ void StartDefaultTask(void const * argument)
 
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-  	  for(;;)
-  	  {
-  		  osDelay(1);
-  	  }
+  for(;;)
+  {
+	  osDelay(1);
+  }
   /* USER CODE END StartDefaultTask */
 }
 
@@ -272,7 +272,7 @@ void HspFunc(void const * argument)
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_RESET);
 		}
 	}
-	/* USER CODE END HspFunc */
+  /* USER CODE END HspFunc */
 }
 
 /* StartUserTask function */
@@ -291,7 +291,7 @@ void StartUserTask(void const * argument)
 /* StartMcbSlaveTask function */
 void StartMcbSlaveTask(void const * argument)
 {
-	/* USER CODE BEGIN StartMcbSlaveTask */
+  /* USER CODE BEGIN StartMcbSlaveTask */
 	osEvent MsgOut;
 	McbMsg mcbMsg;
 	McbInst dvrSlave;
@@ -327,7 +327,7 @@ void StartMcbSlaveTask(void const * argument)
 		}
 		osDelay(1);
 	}
-	/* USER CODE END StartMcbSlaveTask */
+  /* USER CODE END StartMcbSlaveTask */
 }
 
 /* StartBridgeTask function */
@@ -347,28 +347,12 @@ void StartBridgeTask(void const * argument)
 			McbMsg* pMcbSlaveMsg = (McbMsg*) MsgSlaveOut.value.p;
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_SET);
 
-//			for(int i = 0; i < pMcbSlaveMsg->size; i+=4)
-//			{
-//				sprintf(cString, "BRIDGE	Uart readed, addr: %d, cmd: %d, i: %d, size: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
-//						pMcbSlaveMsg->addr, pMcbSlaveMsg->cmd, i, pMcbSlaveMsg->size, pMcbSlaveMsg->data[i+0], pMcbSlaveMsg->data[i+1], pMcbSlaveMsg->data[i+2], pMcbSlaveMsg->data[i+3]);
-//				CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
-//			}
-
 			osMessagePut(HspTxHandle, (uint32_t)pMcbSlaveMsg, osWaitForever);
 
 			MsgMasterOut = osMessageGet(HspRxHandle, osWaitForever);
-
 			if (MsgMasterOut.status == osEventMessage)
 			{
 				McbMsg* pMcbMasterMsg = (McbMsg*) MsgMasterOut.value.p;
-
-//				for(int i = 0; i < pMcbMasterMsg->size; i+=4)
-//				{
-//					sprintf(cString, "BRIDGE Response	Uart readed, addr: %d, cmd: %d, i: %d, size: %d, data[0x%04X][0x%04X][0x%04X][0x%04X]\n\r",
-//							pMcbMasterMsg->addr, pMcbMasterMsg->cmd, i, pMcbMasterMsg->size, pMcbMasterMsg->data[i+0], pMcbMasterMsg->data[i+1], pMcbMasterMsg->data[i+2], pMcbMasterMsg->data[i+3]);
-//					CDC_Transmit_FS((uint8_t*)cString, strlen(cString));
-//				}
-
 				osMessagePut(UartSlaveRxHandle, (uint32_t)pMcbMasterMsg, osWaitForever);
 				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);
 			}

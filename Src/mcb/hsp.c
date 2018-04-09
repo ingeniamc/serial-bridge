@@ -199,7 +199,7 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 		   }
 		   else
 		   {
-			   ptInst->eState = HSP_CRC_ERROR;
+			   ptInst->eState = HSP_ERROR;
 		   }
 		}
 		break;
@@ -236,7 +236,8 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 		break;
 		case HSP_READ_REQUEST_ACK:
 			/* Check if data is already available (IRQ) */
-			if (*ptInst->pu16Irq == 1)
+			if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY) &&
+					(*ptInst->pu16Irq == 1))
 			{
 				/* Now we just need to send the already built frame */
 				*ptInst->pu16Irq = 0;
@@ -246,7 +247,7 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 		break;
 		case HSP_READ_ANSWER:
 			/** Wait until data is received */
-			if (HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY && *ptInst->pu16Irq == 1)
+			if (*ptInst->pu16Irq == 1)
 			{
 				/* Check reception */
 				if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) && (frame_get_addr(&(ptInst->Rxfrm)) == *addr))
@@ -278,7 +279,7 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 				}
 				else
 				{
-					ptInst->eState = HSP_CRC_ERROR;
+					ptInst->eState = HSP_ERROR;
 				}
 			}
 		break;

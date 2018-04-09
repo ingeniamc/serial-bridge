@@ -95,7 +95,7 @@ mcb_read(McbInst* ptInst, McbMsg *mcbMsg)
 			do
 			{
 				eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0]);
-			}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS) && (eStatus != HSP_CRC_ERROR));
+			}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS));
 			mcbMsg->size = ptInst->Hsp.sz;
 		}
 		else
