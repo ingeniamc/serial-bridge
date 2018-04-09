@@ -32,8 +32,10 @@ typedef enum
 	HSP_READ_REQUEST_PENDING,
 	/** Waiting and processing slave cyclic frame */
 	HSP_CYCLIC_ANSWER,
+	/** Cancel transaction */
+	HSP_CANCEL,
 	/** Transaction error */
-	HSP_ERROR,
+	HSP_ERROR
 }EHspStatus;
 
 /** Hsp interfaces options */

@@ -96,116 +96,122 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 {
 	switch (ptInst->eState)
 	{
-	case HSP_STANDBY:
-		*ptInst->pu16Irq = 0;
-		ptInst->sz = *sz;
-		ptInst->u16Pending = 0;
-		ptInst->eState = HSP_WRITE_REQUEST;
-		break;
-	case HSP_WRITE_REQUEST:
-		if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
-		{
-			/* Check if static transmission should be segmented */
-			if (ptInst->sz > HSP_FRM_STA_SZ)
+		case HSP_STANDBY:
+			*ptInst->pu16Irq = 0;
+			ptInst->sz = *sz;
+			ptInst->u16Pending = 0;
+			ptInst->eState = HSP_WRITE_REQUEST;
+			break;
+		case HSP_WRITE_REQUEST:
+			if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
 			{
-				frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0, false);
-				ptInst->u16Pending = 1;
+				/* Check if static transmission should be segmented */
+				if (ptInst->sz > HSP_FRM_STA_SZ)
+				{
+					frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0, false);
+					ptInst->u16Pending = 1;
+				}
+				else
+				{
+					frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0, false);
+				}
+				if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY))
+				{
+					if (ptInst->sz > 0)
+					{
+						ptInst->sz -= 4;
+					}
+					*ptInst->pu16Irq = 0;
+					HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
+					if (ptInst->sz >= HSP_FRM_STA_SZ)
+					{
+						frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0, false);
+					}
+					else
+					{
+						/* Note: We prepare the next frame before the activation of the IRQ to
+						 * improve the timing of the system */
+						frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
+					}
+					ptInst->eState = HSP_WRITE_REQUEST_ACK;
+				}
 			}
-			else
+			break;
+		case HSP_WRITE_REQUEST_ACK:
+			/* Check if data is already available (IRQ) */
+			if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY) && (*ptInst->pu16Irq == 1))
 			{
-				frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0, false);
-			}
-			if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY))
-			{
+				ptInst->eState = HSP_WRITE_ANSWER;
 				if (ptInst->sz > 0)
 				{
 					ptInst->sz -= 4;
 				}
 				*ptInst->pu16Irq = 0;
+				/* Now we just need to send the already built frame */
 				HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
-				if (ptInst->sz >= HSP_FRM_STA_SZ)
-				{
-					frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0, false);
-				}
-				else
-				{
-					/* Note: We prepare the next frame before the activation of the IRQ to
-					 * improve the timing of the system */
-					frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
-				}
-				ptInst->eState = HSP_WRITE_REQUEST_ACK;
 			}
-		}
-		break;
-    case HSP_WRITE_REQUEST_ACK:
-		/* Check if data is already available (IRQ) */
-		if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY) && (*ptInst->pu16Irq == 1))
-		{
-			ptInst->eState = HSP_WRITE_ANSWER;
-			if (ptInst->sz > 0)
+			break;
+		case HSP_WRITE_ANSWER:
+			/** Wait until data is received */
+			if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY) && (*ptInst->pu16Irq == 1))
 			{
-				ptInst->sz -= 4;
-			}
-			*ptInst->pu16Irq = 0;
-			/* Now we just need to send the already built frame */
-			HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
-		}
-		break;
-    case HSP_WRITE_ANSWER:
-		/** Wait until data is received */
-		if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY) && (*ptInst->pu16Irq == 1))
-		{
-			/* Check reception */
-			if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) &&
-					(frame_get_addr(&(ptInst->Rxfrm)) == *addr))
-			{
-				if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_WRITE_ERROR)
+				/* Check reception */
+				if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) &&
+						(frame_get_addr(&(ptInst->Rxfrm)) == *addr))
 				{
-					*cmd = frame_get_cmd(&(ptInst->Rxfrm));
-					ptInst->eState = HSP_ERROR;
-				}
-				else if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_ACK)
-				{
-					if (ptInst->u16Pending)
+					if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_WRITE_ERROR)
 					{
-						/* Prepare next frame */
-						if (ptInst->sz > HSP_FRM_STA_SZ)
+						*cmd = frame_get_cmd(&(ptInst->Rxfrm));
+						ptInst->eState = HSP_CANCEL;
+					}
+					else if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_ACK)
+					{
+						if (ptInst->u16Pending)
 						{
-							frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0, false);
-						}
-						else if (ptInst->sz == HSP_FRM_STA_SZ)
-						{
-							frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0, false);
+							/* Prepare next frame */
+							if (ptInst->sz > HSP_FRM_STA_SZ)
+							{
+								frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0, false);
+							}
+							else if (ptInst->sz == HSP_FRM_STA_SZ)
+							{
+								frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0, false);
+							}
+							else
+							{
+								/* Dummy message, allow reception of last frame CRC */
+								ptInst->u16Pending = 0;
+								frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
+							}
+							ptInst->eState = HSP_WRITE_REQUEST_ACK;
 						}
 						else
 						{
-							/* Dummy message, allow reception of last frame CRC */
-							ptInst->u16Pending = 0;
-							frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
+							*cmd = frame_get_cmd(&(ptInst->Rxfrm));
+							ptInst->eState = HSP_SUCCESS;
+							*sz = 4;
 						}
-						ptInst->eState = HSP_WRITE_REQUEST_ACK;
-					}
-					else
-					{
-						*cmd = frame_get_cmd(&(ptInst->Rxfrm));
-						ptInst->eState = HSP_SUCCESS;
-						*sz = 4;
-					}
+				   }
+				   else
+				   {
+					   ptInst->eState = HSP_CANCEL;
+				   }
 			   }
 			   else
 			   {
-				   ptInst->eState = HSP_ERROR;
+				   ptInst->eState = HSP_CANCEL;
 			   }
-		   }
-		   else
-		   {
-			   ptInst->eState = HSP_ERROR;
-		   }
-		}
-		break;
-    default:
-    	ptInst->eState = HSP_STANDBY;
-    	break;
+			}
+			break;
+		case HSP_CANCEL:
+			/* Cancel init transaction */
+			frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
+			HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
+			ptInst->eState = HSP_ERROR;
+			break;
+		default:
+			ptInst->eState = HSP_STANDBY;
+			break;
     }
 
     return ptInst->eState;
@@ -219,7 +225,7 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 		case HSP_STANDBY:
 			*ptInst->pu16Irq = 0;
 			ptInst->eState = HSP_READ_REQUEST;
-		break;
+			break;
 		case HSP_READ_REQUEST:
 			if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
 			{
@@ -233,7 +239,7 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 				frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
 				ptInst->eState = HSP_READ_REQUEST_ACK;
 			}
-		break;
+			break;
 		case HSP_READ_REQUEST_ACK:
 			/* Check if data is already available (IRQ) */
 			if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY) &&
@@ -244,7 +250,7 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 				HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
 				ptInst->eState = HSP_READ_ANSWER;
 			}
-		break;
+			break;
 		case HSP_READ_ANSWER:
 			/** Wait until data is received */
 			if (*ptInst->pu16Irq == 1)
@@ -259,7 +265,7 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 					*cmd = frame_get_cmd(&(ptInst->Rxfrm));
 					if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_READ_ERROR)
 					{
-						ptInst->eState = HSP_ERROR;
+						ptInst->eState = HSP_CANCEL;
 					}
 					else if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_ACK)
 					{
@@ -274,18 +280,24 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 					}
 					else
 					{
-						ptInst->eState = HSP_ERROR;
+						ptInst->eState = HSP_CANCEL;
 					}
 				}
 				else
 				{
-					ptInst->eState = HSP_ERROR;
+					ptInst->eState = HSP_CANCEL;
 				}
 			}
-		break;
-	default:
-		ptInst->eState = HSP_STANDBY;
-    	break;
+			break;
+		case HSP_CANCEL:
+			/* Cancel init transaction */
+			frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
+			HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
+			ptInst->eState = HSP_ERROR;
+			break;
+		default:
+			ptInst->eState = HSP_STANDBY;
+			break;
     }
 
     return ptInst->eState;
