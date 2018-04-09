@@ -64,6 +64,7 @@ McbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
 		}
 		else
 		{
+			/** No blocking mode */
 			eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0], &sz);
 		}
 		if (eStatus == HSP_SUCCESS)
@@ -102,6 +103,7 @@ McbRead(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
 		}
 		else
 		{
+			/** No blocking mode */
 			eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0]);
 		}
 

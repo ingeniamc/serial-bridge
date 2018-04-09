@@ -138,7 +138,7 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 			}
 			break;
 		case HSP_WRITE_REQUEST_ACK:
-			/* Check if data is already available (IRQ) */
+			/** Check if data is already available (IRQ) */
 			if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY) && (*ptInst->pu16Irq == 1))
 			{
 				ptInst->eState = HSP_WRITE_ANSWER;
@@ -155,7 +155,7 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 			/** Wait until data is received */
 			if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY) && (*ptInst->pu16Irq == 1))
 			{
-				/* Check reception */
+				/** Check reception */
 				if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) &&
 						(frame_get_addr(&(ptInst->Rxfrm)) == *addr))
 				{
@@ -205,9 +205,12 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 			break;
 		case HSP_CANCEL:
 			/* Cancel init transaction */
-			frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
-			HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
-			ptInst->eState = HSP_ERROR;
+			if (HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY)
+			{
+				frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
+				HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
+				ptInst->eState = HSP_ERROR;
+			}
 			break;
 		default:
 			ptInst->eState = HSP_STANDBY;
@@ -291,9 +294,12 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 			break;
 		case HSP_CANCEL:
 			/* Cancel init transaction */
-			frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
-			HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
-			ptInst->eState = HSP_ERROR;
+			if (HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY)
+			{
+				frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
+				HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
+				ptInst->eState = HSP_ERROR;
+			}
 			break;
 		default:
 			ptInst->eState = HSP_STANDBY;
