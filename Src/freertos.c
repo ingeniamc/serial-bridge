@@ -248,25 +248,31 @@ void HspFunc(void const * argument)
 		{
 			McbMsg* pMcbMsg = (McbMsg*)MsgOut.value.p;
 
-			switch (pMcbMsg->cmd)
+			uint32_t u32NumTry = 0;
+			do
 			{
-				case HSP_REQ_READ:
-					pMcbMsg->eStatus = McbRead(&dvrMaster, pMcbMsg, DFLT_TIMEOUT);
-					break;
-				case HSP_REQ_WRITE:
-				case HSP_REQ_CLOSE:
-				case HSP_REQ_CPU_CHANGE:
-					pMcbMsg->eStatus = McbWrite(&dvrMaster, pMcbMsg, DFLT_TIMEOUT);
-					break;
-				default:
-					/** Nothing */
-					break;
-			}
+				switch (pMcbMsg->cmd)
+				{
+					case HSP_REQ_READ:
+						pMcbMsg->eStatus = McbRead(&dvrMaster, pMcbMsg, DFLT_TIMEOUT);
+						break;
+					case HSP_REQ_WRITE:
+					case HSP_REQ_CLOSE:
+					case HSP_REQ_CPU_CHANGE:
+						pMcbMsg->eStatus = McbWrite(&dvrMaster, pMcbMsg, DFLT_TIMEOUT);
+						break;
+					default:
+						/** Nothing */
+						break;
+				}
 
-			if (pMcbMsg->eStatus != MCB_MESSAGE_SUCCESS)
-			{
-				/* Error */
-			}
+				if (pMcbMsg->eStatus != MCB_MESSAGE_SUCCESS)
+				{
+					/* Error */
+					osDelay(100);
+				}
+
+			}while ((pMcbMsg->eStatus == MCB_MESSAGE_SUCCESS) && ((u32NumTry++) < NUM_MASTER_TRY));
 
 			osMessagePut(HspRxHandle, (uint32_t)pMcbMsg, osWaitForever);
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_RESET);
