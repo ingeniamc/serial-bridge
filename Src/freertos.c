@@ -272,7 +272,7 @@ void HspFunc(void const * argument)
 					osDelay(100);
 				}
 
-			}while ((pMcbMsg->eStatus == MCB_MESSAGE_SUCCESS) && ((u32NumTry++) < NUM_MASTER_TRY));
+			}while ((pMcbMsg->eStatus != MCB_MESSAGE_SUCCESS) && ((u32NumTry++) < COMMS_NUM_TRY));
 
 			osMessagePut(HspRxHandle, (uint32_t)pMcbMsg, osWaitForever);
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_RESET);
@@ -318,10 +318,17 @@ void StartMcbSlaveTask(void const * argument)
 				McbMsg* pMcbSlaveMssg = (McbMsg*) MsgOut.value.p;
 				if (pMcbSlaveMssg->eStatus == MCB_MESSAGE_SUCCESS)
 				{
-					if (McbWrite(&dvrSlave, pMcbSlaveMssg, DFLT_TIMEOUT) != MCB_MESSAGE_SUCCESS)
+					uint32_t u32NumTry = 0;
+					do
 					{
-						/* ERROR */
-					}
+						pMcbSlaveMssg->eStatus = McbWrite(&dvrSlave, pMcbSlaveMssg, DFLT_TIMEOUT);
+
+						if (pMcbSlaveMssg->eStatus != MCB_MESSAGE_SUCCESS)
+						{
+							/* Error */
+							osDelay(100);
+						}
+					}while ((pMcbSlaveMssg->eStatus != MCB_MESSAGE_SUCCESS) && ((u32NumTry++) < COMMS_NUM_TRY));
 				}
 				else
 				{
