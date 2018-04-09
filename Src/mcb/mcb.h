@@ -6,6 +6,8 @@
 
 #define HSP_MAX_DATA_SZ 128
 
+#define DFLT_TIMEOUT 100
+
 /** Available interfaces */
 typedef enum
 {
@@ -36,7 +38,7 @@ typedef enum
 	MCB_MESSAGE_SUCCESS,
 	/* Request error */
 	MCB_MESSAGE_ERROR
-}EMcbMsgStatus;
+}EMcbReqStatus;
 
 /** Motion control but instance */
 typedef struct
@@ -65,7 +67,7 @@ typedef struct
 	/* Static data */
 	uint16_t data[HSP_MAX_DATA_SZ];
 	/* Message status */
-	EMcbMsgStatus eStatus;
+	EMcbReqStatus eStatus;
 }McbMsg;
 
 /** Initialization functions */
@@ -73,9 +75,29 @@ void mcb_init(McbInst* ptInst, EMcbIntf eIntf,
 		EMcbMode eMode, EMcbRequestMode eReqMode);
 void mcb_deinit(McbInst* ptInst);
 
-/** Generic read write functions */
-EMcbMsgStatus mcb_write(McbInst* ptInst, McbMsg *mcbMsg);
-EMcbMsgStatus mcb_read(McbInst* ptInst, McbMsg *mcbMsg);
+/**
+ * Generic write function
+ *
+ * @param[in] ptInst
+ *  Specifies the target instance
+ * @param[in/out] mcbMsg
+ *  Request to be send and load with reply
+ * @param[in] u32Timeout
+ *  Timeout duration
+ */
+EMcbReqStatus McbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout);
+
+/**
+ * Generic read function
+ *
+ * @param[in] ptInst
+ *  Specifies the target instance
+ * @param[in/out] mcbMsg
+ *  Request to be send and load with reply
+ * @param[in] u32Timeout
+ *  Timeout duration
+ */
+EMcbReqStatus McbRead(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout);
 
 /** Motion read/write functions */
 

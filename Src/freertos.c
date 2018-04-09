@@ -251,12 +251,12 @@ void HspFunc(void const * argument)
 			switch (pMcbMsg->cmd)
 			{
 				case HSP_REQ_READ:
-					pMcbMsg->eStatus = mcb_read(&dvrMaster, pMcbMsg);
+					pMcbMsg->eStatus = McbRead(&dvrMaster, pMcbMsg, DFLT_TIMEOUT);
 					break;
 				case HSP_REQ_WRITE:
 				case HSP_REQ_CLOSE:
 				case HSP_REQ_CPU_CHANGE:
-					pMcbMsg->eStatus = mcb_write(&dvrMaster, pMcbMsg);
+					pMcbMsg->eStatus = McbWrite(&dvrMaster, pMcbMsg, DFLT_TIMEOUT);
 					break;
 				default:
 					/** Nothing */
@@ -302,7 +302,7 @@ void StartMcbSlaveTask(void const * argument)
 	for(;;)
 	{
 		/* Chek for incoming uart message*/
-		if (mcb_read(&dvrSlave, &mcbMsg) == MCB_MESSAGE_SUCCESS)
+		if (McbRead(&dvrSlave, &mcbMsg, DFLT_TIMEOUT) == MCB_MESSAGE_SUCCESS)
 		{
 			osMessagePut(UartSlaveTxHandle, (uint32_t)&mcbMsg, osWaitForever);
 
@@ -312,7 +312,7 @@ void StartMcbSlaveTask(void const * argument)
 				McbMsg* pMcbSlaveMssg = (McbMsg*) MsgOut.value.p;
 				if (pMcbSlaveMssg->eStatus == MCB_MESSAGE_SUCCESS)
 				{
-					if (mcb_write(&dvrSlave, pMcbSlaveMssg) != MCB_MESSAGE_SUCCESS)
+					if (McbWrite(&dvrSlave, pMcbSlaveMssg, DFLT_TIMEOUT) != MCB_MESSAGE_SUCCESS)
 					{
 						/* ERROR */
 					}
@@ -321,7 +321,6 @@ void StartMcbSlaveTask(void const * argument)
 				{
 					/** Enable Orange led when driver comm fails */
 					HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_SET);
-					osDelay(10000);
 				}
 			}
 		}

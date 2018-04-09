@@ -320,6 +320,7 @@ HspReadUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *p
 						*ptCmd = frame_get_cmd(&ptInst->Rxfrm);
 						ptInst->sz += frame_get_static_data(&ptInst->Rxfrm, &ptData[ptInst->sz]);
 
+						/** If request is segmented type */
 						if (ptInst->sz > (HSP_FRM_STATIC_SIZE_BYTES/2) ||
 								(frame_get_segmented(&ptInst->Rxfrm) == 1))
 						{
@@ -331,7 +332,6 @@ HspReadUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *p
 						}
 						else
 						{
-							/* Not fragmented frames do not need ack before being process*/
 							ptInst->eState = HSP_SUCCESS;
 						}
 					}
@@ -343,11 +343,7 @@ HspReadUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *p
 				}
 				else
 				{
-					if (ptInst->eState != HSP_READ_REQUEST)
-					{
-						HAL_UART_AbortReceive(ptInst->phUsart);
-						ptInst->eState = HSP_ERROR;
-					}
+					ptInst->eState = HSP_ERROR;
 				}
 			}
 			else
@@ -360,15 +356,15 @@ HspReadUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *p
     		{
 				frame_create(&(ptInst->Txfrm), 0, HSP_READ_REQUEST_ACK, HSP_FRM_NOTSEG, NULL, NULL, 0, true);
 
-				uint8_t u8Tmp;
-				for (int i = 0; i < HSP_FRM_STATIC_SIZE_BYTES; i+=2)
+				uint16_t u16Tmp;
+				for (int i = 0; i < ptInst->Txfrm.sz; i++)
 				{
-					u8Tmp = ((uint8_t*)ptInst->Txfrm.buf)[i];
-					((uint8_t*)ptInst->Txfrm.buf)[i] = ((uint8_t*)ptInst->Txfrm.buf)[i+1];
-					((uint8_t*)ptInst->Txfrm.buf)[i+1] = u8Tmp;
+					u16Tmp = ptInst->Txfrm.buf[i];
+					ptInst->Txfrm.buf[i] = ((u16Tmp & 0x00ff) << 8) |
+							((u16Tmp & 0xff00) >> 8);
 				}
 
-				HAL_UART_Transmit(ptInst->phUsart, (uint8_t*)ptInst->Txfrm.buf, ptInst->Txfrm.sz*2, 100);
+				HAL_UART_Transmit(ptInst->phUsart, (uint8_t*)ptInst->Txfrm.buf, (ptInst->Txfrm.sz * 2), 100);
 
 				if (frame_get_segmented(&ptInst->Rxfrm) == 0)
 				{
@@ -399,23 +395,22 @@ HSPWriteUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *
 		case HSP_WRITE_ANSWER:
 		case HSP_WRITE_ANSWER_PENDING:
 		{
-			TFrame tFrame;
 			if (*ptSz <= 4)
 			{
-				frame_create(&tFrame, *ptAddr, *ptCmd, HSP_FRM_NOTSEG, &ptData[ptInst->sz-*ptSz], NULL, 0, true);
+				frame_create(&ptInst->Txfrm, *ptAddr, *ptCmd, HSP_FRM_NOTSEG, &ptData[(ptInst->sz - *ptSz)], NULL, 0, true);
 			}
 			else
 			{
-				frame_create(&tFrame, *ptAddr, *ptCmd, HSP_FRM_SEG, &ptData[ptInst->sz-*ptSz], NULL, 0, true);
+				frame_create(&ptInst->Txfrm, *ptAddr, *ptCmd, HSP_FRM_SEG, &ptData[(ptInst->sz - *ptSz)], NULL, 0, true);
 			}
-			uint8_t u8Tmp;
-			for (int i = 0; i < HSP_FRM_STATIC_SIZE_BYTES; i+=2)
+			uint16_t u16Tmp;
+			for (int i = 0; i < ptInst->Txfrm.sz; i++)
 			{
-				u8Tmp = ((uint8_t*)tFrame.buf)[i];
-				((uint8_t*)tFrame.buf)[i] = ((uint8_t*)tFrame.buf)[i+1];
-				((uint8_t*)tFrame.buf)[i+1] = u8Tmp;
+				u16Tmp = ptInst->Txfrm.buf[i];
+				ptInst->Txfrm.buf[i] = ((u16Tmp & 0x00ff) << 8) |
+						((u16Tmp & 0xff00) >> 8);
 			}
-			if (HAL_UART_Transmit(ptInst->phUsart, (uint8_t*)tFrame.buf,
+			if (HAL_UART_Transmit(ptInst->phUsart, (uint8_t*)&ptInst->Txfrm.buf,
 					HSP_FRM_STATIC_SIZE_BYTES, 100) == HAL_OK)
 			{
 				ptInst->eState = HSP_SUCCESS;
