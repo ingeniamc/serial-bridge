@@ -257,12 +257,10 @@ void HspFunc(void const * argument)
 						pMcbMsg->eStatus = McbRead(&dvrMaster, pMcbMsg, DFLT_TIMEOUT);
 						break;
 					case HSP_REQ_WRITE:
-					case HSP_REQ_CLOSE:
-					case HSP_REQ_CPU_CHANGE:
 						pMcbMsg->eStatus = McbWrite(&dvrMaster, pMcbMsg, DFLT_TIMEOUT);
 						break;
 					default:
-						/** Nothing */
+						pMcbMsg->eStatus = MCB_MESSAGE_ERROR;
 						break;
 				}
 

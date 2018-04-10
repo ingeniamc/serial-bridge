@@ -28,10 +28,6 @@
 #define HSP_REQ_READ            1U
 /** Write request */
 #define HSP_REQ_WRITE           2U
-/** Close request */
-#define HSP_REQ_CLOSE           3U
-/** Request CPU Change */
-#define HSP_REQ_CPU_CHANGE      4U
 /** Idle request  */
 #define HSP_REQ_IDLE            7U
 
