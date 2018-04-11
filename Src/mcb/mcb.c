@@ -46,7 +46,7 @@ void mcb_deinit(McbInst* ptInst)
 }
 
 EMcbReqStatus
-McbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
+mcbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
 {
 	EMcbReqStatus eResult = MCB_MESSAGE_ERROR;
 	EHspStatus eStatus;
@@ -85,7 +85,7 @@ McbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
 }
 
 EMcbReqStatus
-McbRead(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
+mcbRead(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
 {
 	EMcbReqStatus eResult = 0;
 	EHspStatus eStatus = HSP_ERROR;
@@ -146,26 +146,6 @@ void* mcb_rx_map(McbInst* ptInst, uint16_t addr, size_t sz)
 int32_t mcb_enable_cyclic(McbInst* ptInst)
 {
 	int32_t i32Result = 0;
-	EHspStatus eStatus;
-
-	if ((ptInst->isCyclic == false) && (ptInst->eMode == MCB_MASTER))
-	{
-		size_t sz;
-		McbMsg mcbMsg;
-		mcbMsg.addr = 0x640;
-		mcbMsg.cmd = 1;
-		// TODO memcpy
-		mcbMsg.data[0] = 2;
-		mcbMsg.data[1] = 0;
-		mcbMsg.data[2] = 0;
-		mcbMsg.data[3] = 0;
-		sz = 4;
-		do
-		{
-			eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg.addr, &mcbMsg.cmd, &mcbMsg.data[0], &sz);
-		}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS));
-	}
-
 	return i32Result;
 }
 

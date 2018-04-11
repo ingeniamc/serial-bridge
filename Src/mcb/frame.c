@@ -38,7 +38,7 @@ typedef union
 #define HSP_FRM_DYN_FLD        HSP_FRM_STA_FLD + HSP_FRM_STA_SZ
 
 uint16_t
-FrameCRC(const TFrame *tFrame);
+frameCRC(const TFrame *tFrame);
 
 IER_RET
 frame_create(TFrame *tFrame, uint16_t u16Addr, uint8_t u8Cmd, uint8_t u8Pending,
@@ -87,7 +87,7 @@ frame_create(TFrame *tFrame, uint16_t u16Addr, uint8_t u8Cmd, uint8_t u8Pending,
 		if (calcCRC != false)
 		{
 			/* Compute CRC and add it to buffer */
-			tFrame->buf[HSP_FRM_DYN_FLD + szDyn] = FrameCRC(tFrame);
+			tFrame->buf[HSP_FRM_DYN_FLD + szDyn] = frameCRC(tFrame);
 			tFrame->sz += 1;
 		}
         break;
@@ -128,11 +128,11 @@ frame_get_static_data(const TFrame *frm, uint16_t *buf)
     return HSP_FRM_STA_SZ;
 }
 
-bool FrameCheckCRC(const TFrame *tFrame)
+bool frameCheckCRC(const TFrame *tFrame)
 {
     bool bCRC = true;
 
-    if (FrameCRC(tFrame) != 0)
+    if (frameCRC(tFrame) != 0)
     {
         bCRC = false;
     }
@@ -140,7 +140,7 @@ bool FrameCheckCRC(const TFrame *tFrame)
     return bCRC;
 }
 
-uint16_t FrameCRC(const TFrame *tFrame)
+uint16_t frameCRC(const TFrame *tFrame)
 {
     uint16_t crc = CRC_START_XMODEM;
 

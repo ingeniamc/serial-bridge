@@ -85,7 +85,7 @@ void mcb_deinit(McbInst* ptInst);
  * @param[in] u32Timeout
  *  Timeout duration
  */
-EMcbReqStatus McbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout);
+EMcbReqStatus mcbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout);
 
 /**
  * Generic read function
@@ -97,7 +97,7 @@ EMcbReqStatus McbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout);
  * @param[in] u32Timeout
  *  Timeout duration
  */
-EMcbReqStatus McbRead(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout);
+EMcbReqStatus mcbRead(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout);
 
 /** Motion read/write functions */
 

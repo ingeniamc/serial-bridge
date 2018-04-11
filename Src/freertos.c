@@ -57,6 +57,7 @@
 #include "usart.h"
 #include "mcb/mcb.h"
 #include "usbd_cdc_if.h"
+#include "mcb/frame.h"
 
 /* USER CODE END Includes */
 
@@ -219,11 +220,11 @@ void StartDefaultTask(void const * argument)
   MX_USB_DEVICE_Init();
 
   /* USER CODE BEGIN StartDefaultTask */
-  /* Infinite loop */
-  for(;;)
-  {
-	  osDelay(1);
-  }
+    /* Infinite loop */
+	for(;;)
+	{
+		osDelay(1);
+	}
   /* USER CODE END StartDefaultTask */
 }
 
@@ -254,12 +255,12 @@ void HspFunc(void const * argument)
 				switch (pMcbMsg->cmd)
 				{
 					case HSP_REQ_READ:
-						pMcbMsg->eStatus = McbRead(&dvrMaster, pMcbMsg, DFLT_TIMEOUT);
+						pMcbMsg->eStatus = mcbRead(&dvrMaster, pMcbMsg, DFLT_TIMEOUT);
 						break;
 					case HSP_REQ_WRITE:
 					case HSP_REQ_CLOSE:
 					case HSP_REQ_CPU_CHANGE:
-						pMcbMsg->eStatus = McbWrite(&dvrMaster, pMcbMsg, DFLT_TIMEOUT);
+						pMcbMsg->eStatus = mcbWrite(&dvrMaster, pMcbMsg, DFLT_TIMEOUT);
 						break;
 					default:
 						/** Nothing */
@@ -286,11 +287,11 @@ void StartUserTask(void const * argument)
 {
   /* USER CODE BEGIN StartUserTask */
 
-  /* Infinite loop */
-  for(;;)
-  {
-	  osDelay(1);
-  }
+	/* Infinite loop */
+	for(;;)
+	{
+		osDelay(1);
+	}
   /* USER CODE END StartUserTask */
 }
 
@@ -308,7 +309,7 @@ void StartMcbSlaveTask(void const * argument)
 	for(;;)
 	{
 		/* Chek for incoming uart message*/
-		if (McbRead(&dvrSlave, &mcbMsg, DFLT_TIMEOUT) == MCB_MESSAGE_SUCCESS)
+		if (mcbRead(&dvrSlave, &mcbMsg, DFLT_TIMEOUT) == MCB_MESSAGE_SUCCESS)
 		{
 			osMessagePut(UartSlaveTxHandle, (uint32_t)&mcbMsg, osWaitForever);
 
@@ -321,7 +322,7 @@ void StartMcbSlaveTask(void const * argument)
 					uint32_t u32NumTry = 0;
 					do
 					{
-						pMcbSlaveMssg->eStatus = McbWrite(&dvrSlave, pMcbSlaveMssg, DFLT_TIMEOUT);
+						pMcbSlaveMssg->eStatus = mcbWrite(&dvrSlave, pMcbSlaveMssg, DFLT_TIMEOUT);
 
 						if (pMcbSlaveMssg->eStatus != MCB_MESSAGE_SUCCESS)
 						{

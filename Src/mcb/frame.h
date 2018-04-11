@@ -125,6 +125,6 @@ frame_get_static_data(const TFrame *frm, uint16_t *buf);
  *         false if crc is wrong
  */
 bool
-FrameCheckCRC(const TFrame *frm);
+frameCheckCRC(const TFrame *frm);
 
 #endif
