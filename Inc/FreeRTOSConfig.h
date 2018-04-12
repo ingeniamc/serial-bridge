@@ -161,6 +161,11 @@ header file. */
 #define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );}
 
 #define COMMS_NUM_TRY 5
+
+#define NODE 10
+
+#define COCO_NODE 1
+#define MOCO_NODE 2
 /* USER CODE END 1 */
 
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS

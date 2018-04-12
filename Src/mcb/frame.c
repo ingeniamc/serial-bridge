@@ -5,12 +5,21 @@
 #include "checksum.h"
 #include "error.h"
 
-/** frm description
+/** Frame description
  * Word 0      - Header
  * Word 1..4   - Static data
  * Word 5..N-1 - Dynamic data (optional)
  * Word N      - CRC
  */
+
+/** Uart frame description
+ * Word 0      - Node Header
+ * Word 1	   - Header
+ * Word 2..5   - Static data
+ * Word 6..N-1 - Dynamic data (optional)
+ * Word N      - CRC
+ */
+
 typedef union
 {
     struct
@@ -23,7 +32,19 @@ typedef union
         unsigned int   addr:12;
     };
     uint16_t       all;
-}hdr_t;
+}THeader;
+
+typedef union
+{
+    struct
+    {
+        /** Node address */
+    	uint16_t 	u16Node:12;
+        /** Internal network node */
+    	uint16_t 	u16SubNode:4;
+    };
+    uint16_t       all;
+}TNodeHeader;
 
 /** Ingenia protocol frame header size */
 #define HSP_FRM_HDR_SZ         1U
@@ -33,22 +54,21 @@ typedef union
 #define HSP_FRM_MAX_DYN_SZ     (HSP_FRM_MAX_DATA_SZ - HSP_FRM_HDR_SZ - \
                                 HSP_FRM_STA_SZ - HSP_FRM_CRC_SZ)
 
-#define HSP_FRM_HDR_FLD        0U
-#define HSP_FRM_STA_FLD        HSP_FRM_HDR_FLD + HSP_FRM_HDR_SZ
-#define HSP_FRM_DYN_FLD        HSP_FRM_STA_FLD + HSP_FRM_STA_SZ
-
 uint16_t
 FrameCRC(const TFrame *tFrame);
 
 IER_RET
-frame_create(TFrame *tFrame, uint16_t u16Addr, uint8_t u8Cmd, uint8_t u8Pending,
-           	 const void *pStaBuf, const void *pDynBuf, size_t szDyn, bool calcCRC)
+FrameCreate(TFrame *tFrame, TFrameType tFrameType, uint16_t u16Node, uint16_t u16SubNode,
+		uint16_t u16Addr, uint8_t u8Cmd, uint8_t u8Pending,	const void *pStaBuf,
+		const void *pDynBuf, size_t szDyn, bool calcCRC)
 {
     IER_RET err = IER_SUCCESS;
 
     while (1)
     {
-        hdr_t header;
+        THeader tHeader;
+        TNodeHeader tNodeHeader;
+        uint16_t u16HeadSz = 0;
         if (tFrame == NULL)
         {
             err = IER_INVAL;
@@ -62,32 +82,41 @@ frame_create(TFrame *tFrame, uint16_t u16Addr, uint8_t u8Cmd, uint8_t u8Pending,
             break;
         }
         
+        tFrame->tFrameType = tFrameType;
         /* Build header and assign it to buffer */
-        header.addr = u16Addr;
-        header.cmd = u8Cmd;
-        header.pending = u8Pending;
-        tFrame->buf[HSP_FRM_HDR_FLD] = header.all;
+        if (tFrameType == UART_FRAME)
+        {
+        	tNodeHeader.u16Node = u16Node;
+        	tNodeHeader.u16SubNode = u16SubNode;
+        	tFrame->buf[u16HeadSz] = tNodeHeader.all;
+        	u16HeadSz += HSP_NODE_FRM_HDR_SZ;
+        }
+        tHeader.addr = u16Addr;
+        tHeader.cmd = u8Cmd;
+        tHeader.pending = u8Pending;
+        tFrame->buf[u16HeadSz] = tHeader.all;
+        u16HeadSz += HSP_FRM_HEAD_SZ;
 
         /* Copy static & dynamic buffer (if any) */
         if (pStaBuf != NULL)
         {
-			memcpy(&tFrame->buf[HSP_FRM_STA_FLD], pStaBuf, (sizeof(tFrame->buf[0]) *
+			memcpy(&tFrame->buf[u16HeadSz], pStaBuf, (sizeof(tFrame->buf[0]) *
 					HSP_FRM_STA_SZ));
         }
         else
         {
-			memset(&tFrame->buf[HSP_FRM_STA_FLD], 0, (sizeof(tFrame->buf[0]) *
+			memset(&tFrame->buf[u16HeadSz], 0, (sizeof(tFrame->buf[0]) *
 					HSP_FRM_STA_SZ ));
         }
 
-		memcpy(&tFrame->buf[HSP_FRM_DYN_FLD], pDynBuf, (sizeof(tFrame->buf[0]) *
-				szDyn));
+		memcpy(&tFrame->buf[(u16HeadSz + HSP_FRM_STA_SZ)], pDynBuf,
+				(sizeof(tFrame->buf[0]) * szDyn));
 
-		tFrame->sz = HSP_FRM_HDR_SZ + HSP_FRM_STA_SZ + szDyn;
+		tFrame->sz = u16HeadSz + HSP_FRM_STA_SZ + szDyn;
 		if (calcCRC != false)
 		{
 			/* Compute CRC and add it to buffer */
-			tFrame->buf[HSP_FRM_DYN_FLD + szDyn] = FrameCRC(tFrame);
+			tFrame->buf[(u16HeadSz + HSP_FRM_STA_SZ) + szDyn] = FrameCRC(tFrame);
 			tFrame->sz += 1;
 		}
         break;
@@ -96,35 +125,83 @@ frame_create(TFrame *tFrame, uint16_t u16Addr, uint8_t u8Cmd, uint8_t u8Pending,
     return err;
 }
 
-bool
-frame_get_segmented(const TFrame *frm)
+uint16_t
+FrameGetNode(const TFrame *tFrame)
 {
-    hdr_t hdr;
-    hdr.all = frm->buf[HSP_FRM_HDR_FLD]; 
-    return (bool)hdr.pending;
+	TNodeHeader tNodeHeader;
+	if (tFrame->tFrameType == UART_FRAME)
+	{
+		tNodeHeader.all = tFrame->buf[0];
+	}
+
+    return (uint16_t)tNodeHeader.u16Node;
 }
 
 uint16_t
-frame_get_addr(const TFrame *frm)
+FrameGetSubNode(const TFrame *tFrame)
 {
-    hdr_t hdr;
-    hdr.all = frm->buf[HSP_FRM_HDR_FLD]; 
-    return (uint16_t)hdr.addr;
+	TNodeHeader tNodeHeader;
+	if (tFrame->tFrameType == UART_FRAME)
+	{
+		tNodeHeader.all = tFrame->buf[0];
+	}
+
+    return (uint16_t)tNodeHeader.u16SubNode;
+}
+
+bool
+FrameGetSegmented(const TFrame *tFrame)
+{
+	THeader tHeader;
+	uint16_t u16HeadField = 0;
+	if (tFrame->tFrameType == UART_FRAME)
+	{
+		u16HeadField = HSP_NODE_FRM_HDR_SZ;
+	}
+
+    tHeader.all = tFrame->buf[u16HeadField];
+    return (bool)tHeader.pending;
+}
+
+uint16_t
+FrameGetAddr(const TFrame *tFrame)
+{
+    THeader tHeader;
+    uint16_t u16HeadField = 0;
+	if (tFrame->tFrameType == UART_FRAME)
+	{
+		u16HeadField = HSP_NODE_FRM_HDR_SZ;
+	}
+
+    tHeader.all = tFrame->buf[u16HeadField];
+    return (uint16_t)tHeader.addr;
 }
 
 uint8_t
-frame_get_cmd(const TFrame *frm)
+FrameGetCmd(const TFrame *tFrame)
 {
-    hdr_t hdr;
-    hdr.all = frm->buf[HSP_FRM_HDR_FLD]; 
-    return (uint8_t)hdr.cmd;
+    THeader tHeader;
+    uint16_t u16HeadField = 0;
+	if (tFrame->tFrameType == UART_FRAME)
+	{
+		u16HeadField = HSP_NODE_FRM_HDR_SZ;
+	}
+
+    tHeader.all = tFrame->buf[u16HeadField];
+    return (uint8_t)tHeader.cmd;
 }
 
 uint16_t
-frame_get_static_data(const TFrame *frm, uint16_t *buf)
+FrameGetStaticData(const TFrame *tFrame, uint16_t *buf)
 {
-    memcpy(buf, &frm->buf[HSP_FRM_STA_FLD],
-            sizeof(frm->buf[0]) * HSP_FRM_STA_SZ);
+	uint16_t u16HeadField = 0;
+	if (tFrame->tFrameType == UART_FRAME)
+	{
+		u16HeadField = HSP_NODE_FRM_HDR_SZ;
+	}
+
+    memcpy(buf, &tFrame->buf[(u16HeadField + HSP_FRM_HEAD_SZ)],
+            sizeof(tFrame->buf[0]) * HSP_FRM_STA_SZ);
     return HSP_FRM_STA_SZ;
 }
 

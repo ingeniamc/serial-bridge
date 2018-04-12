@@ -58,10 +58,14 @@ typedef struct
 /** Frame data struct */
 typedef struct
 {
+	/* Node data */
+	uint16_t u16Node;
+	/* Subnode data */
+	uint16_t u16SubNode;
 	/* Address data */
-	uint16_t addr;
+	uint16_t u16Addr;
 	/* Command data */
-	uint16_t cmd;
+	uint16_t u16Cmd;
 	/* Message total size (bytes) */
 	size_t 	 size;
 	/* Static data */

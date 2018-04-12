@@ -33,7 +33,7 @@ mcb_init(McbInst* ptInst, EMcbIntf eIntf,
 		eHspMode = SLAVE_MODE;
 	}
 
-	hsp_init(&ptInst->Hsp, eHspIntf, eHspMode);
+	HspInit(&ptInst->Hsp, eHspIntf, eHspMode);
 }
 
 void mcb_deinit(McbInst* ptInst)
@@ -42,7 +42,7 @@ void mcb_deinit(McbInst* ptInst)
 	ptInst->isCyclic = false;
 	ptInst->eMode = MCB_SLAVE;
 	ptInst->eReqMode = MCB_BLOCKING;
-	hsp_deinit(&ptInst->Hsp);
+	HspDeinit(&ptInst->Hsp);
 }
 
 EMcbReqStatus
@@ -59,13 +59,15 @@ McbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
 			uint32_t u32Millis = HAL_GetTick();
 			do
 			{
-				eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0], &mcbMsg->size);
+				eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->u16Node, &mcbMsg->u16SubNode,
+											&mcbMsg->u16Addr, &mcbMsg->u16Cmd, &mcbMsg->data[0], &mcbMsg->size);
 			}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS) && ((HAL_GetTick() - u32Millis) < u32Timeout));
 		}
 		else
 		{
 			/** No blocking mode */
-			eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0], &sz);
+			eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->u16Node, &mcbMsg->u16SubNode,
+										&mcbMsg->u16Addr, &mcbMsg->u16Cmd, &mcbMsg->data[0], &sz);
 		}
 		if (eStatus == HSP_SUCCESS)
 		{
@@ -97,14 +99,16 @@ McbRead(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
 			uint32_t u32Millis = HAL_GetTick();
 			do
 			{
-				eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0]);
+				eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->u16Node, &mcbMsg->u16SubNode,
+										   &mcbMsg->u16Addr, &mcbMsg->u16Cmd, &mcbMsg->data[0]);
 			}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS) && ((HAL_GetTick() - u32Millis) < u32Timeout));
 			mcbMsg->size = ptInst->Hsp.sz;
 		}
 		else
 		{
 			/** No blocking mode */
-			eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0]);
+			eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->u16Node, &mcbMsg->u16SubNode,
+									   &mcbMsg->u16Addr, &mcbMsg->u16Cmd, &mcbMsg->data[0]);
 		}
 
 		if (eStatus == HSP_SUCCESS)
@@ -152,9 +156,8 @@ int32_t mcb_enable_cyclic(McbInst* ptInst)
 	{
 		size_t sz;
 		McbMsg mcbMsg;
-		mcbMsg.addr = 0x640;
-		mcbMsg.cmd = 1;
-		// TODO memcpy
+		mcbMsg.u16Addr = 0x640;
+		mcbMsg.u16Cmd = 1;
 		mcbMsg.data[0] = 2;
 		mcbMsg.data[1] = 0;
 		mcbMsg.data[2] = 0;
@@ -162,7 +165,8 @@ int32_t mcb_enable_cyclic(McbInst* ptInst)
 		sz = 4;
 		do
 		{
-			eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg.addr, &mcbMsg.cmd, &mcbMsg.data[0], &sz);
+			eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg.u16Node, &mcbMsg.u16SubNode,
+										&mcbMsg.u16Addr, &mcbMsg.u16Cmd, &mcbMsg.data[0], &sz);
 		}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS));
 	}
 

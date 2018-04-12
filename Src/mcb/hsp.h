@@ -80,16 +80,16 @@ struct HspInst
 	size_t sz;
 	uint16_t u16Pending;
 	/** Write frame */
-	EHspStatus (*write)(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data, size_t *sz);
+	EHspStatus (*write)(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *ptData, size_t *ptSz);
 	/** Read frame */
-	EHspStatus (*read)(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data);
+	EHspStatus (*read)(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *ptData);
 };
 
 /** Initialize a High speed protocol interface */
 void
-hsp_init(HspInst* ptInst, EHspIntf eIntf, EHspMode eMode);
+HspInit(HspInst* ptInst, EHspIntf eIntf, EHspMode eMode);
 
 /** Deinitialize a high speed protocol interface */
 void
-hsp_deinit(HspInst* ptInst);
+HspDeinit(HspInst* ptInst);
 #endif

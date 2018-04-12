@@ -15,29 +15,33 @@ HspSPITransfer(const HspInst* ptInst, TFrame *tInFrame, TFrame *tOutFrame);
 
 /** Read a static data */
 static EHspStatus
-hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data);
+HspReadSpiMaster(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode,
+				 	uint16_t *ptAaddr, uint16_t *ptCmd, uint16_t *ptData);
 
 static EHspStatus
-HspReadUartSlave(HspInst* ptInst, uint16_t *u16Addr, uint16_t *u16Cmd, uint16_t *u16Data);
+HspReadUartSlave(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode,
+				 uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *ptData);
 
 /** Write a static data */
 static EHspStatus
-hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data, size_t *sz);
+HspWriteSpiMaster(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode,
+				  uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *ptData, size_t *ptSz);
 
 static EHspStatus
-HSPWriteUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *ptData, size_t *ptSz);
+HSPWriteUartSlave(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode,
+				  uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *ptData, size_t *ptSz);
 
 static EHspStatus
-hsp_cyclic_spi_tranfer(HspInst* ptInst, uint16_t *in_buf, uint16_t *out_buf);
+HspCyclicSpiTranfer(HspInst* ptInst, uint16_t *ptInBuf, uint16_t *ptOutBuf);
 
-static void HspSPITransfer(const HspInst* ptInst, TFrame *tInFrame, TFrame *tOutFrame)
+static void HspSPITransfer(const HspInst* ptInst, TFrame *ptInFrame, TFrame *ptOutFrame)
 {
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
-	HAL_SPI_TransmitReceive_DMA(ptInst->phSpi, (uint8_t*)tInFrame->buf, (uint8_t*)tOutFrame->buf, tInFrame->sz);
+	HAL_SPI_TransmitReceive_DMA(ptInst->phSpi, (uint8_t*)ptInFrame->buf, (uint8_t*)ptOutFrame->buf, ptInFrame->sz);
 }
 
 void
-hsp_init(HspInst* ptInst, EHspIntf eIntf, EHspMode eMode)
+HspInit(HspInst* ptInst, EHspIntf eIntf, EHspMode eMode)
 {
 	ptInst->eState = HSP_STANDBY;
 
@@ -49,8 +53,8 @@ hsp_init(HspInst* ptInst, EHspIntf eIntf, EHspMode eMode)
 		if (eMode == MASTER_MODE)
 		{
 			/* SPI Master mode */
-			ptInst->write = &hsp_write_spi_master;
-			ptInst->read = &hsp_read_spi_master;
+			ptInst->write = &HspWriteSpiMaster;
+			ptInst->read = &HspReadSpiMaster;
 		}
 		else
 		{
@@ -82,7 +86,7 @@ hsp_init(HspInst* ptInst, EHspIntf eIntf, EHspMode eMode)
 	*ptInst->pu16Irq = 0;
 }
 
-void hsp_deinit(HspInst* ptInst)
+void HspDeinit(HspInst* ptInst)
 {
 	ptInst->phSpi = NULL;
 	ptInst->phUsart = NULL;
@@ -92,13 +96,14 @@ void hsp_deinit(HspInst* ptInst)
 }
 
 EHspStatus
-hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data, size_t *sz)
+HspWriteSpiMaster(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode,
+				  uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *ptData, size_t *ptSz)
 {
 	switch (ptInst->eState)
 	{
 		case HSP_STANDBY:
 			*ptInst->pu16Irq = 0;
-			ptInst->sz = *sz;
+			ptInst->sz = *ptSz;
 			ptInst->u16Pending = 0;
 			ptInst->eState = HSP_WRITE_REQUEST;
 			break;
@@ -108,12 +113,12 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 				/* Check if static transmission should be segmented */
 				if (ptInst->sz > HSP_FRM_STA_SZ)
 				{
-					frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0, false);
+					FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, *ptAddr, *ptCmd, HSP_FRM_SEG, &ptData[*ptSz-ptInst->sz], NULL, 0, false);
 					ptInst->u16Pending = 1;
 				}
 				else
 				{
-					frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0, false);
+					FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, *ptAddr, *ptCmd, HSP_FRM_NOTSEG, &ptData[*ptSz-ptInst->sz], NULL, 0, false);
 				}
 				if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY))
 				{
@@ -125,13 +130,13 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 					HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
 					if (ptInst->sz >= HSP_FRM_STA_SZ)
 					{
-						frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0, false);
+						FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, *ptAddr, *ptCmd, HSP_FRM_SEG, &ptData[*ptSz-ptInst->sz], NULL, 0, false);
 					}
 					else
 					{
 						/* Note: We prepare the next frame before the activation of the IRQ to
 						 * improve the timing of the system */
-						frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
+						FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, *ptAddr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
 					}
 					ptInst->eState = HSP_WRITE_REQUEST_ACK;
 				}
@@ -157,39 +162,39 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 			{
 				/** Check reception */
 				if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) &&
-						(frame_get_addr(&(ptInst->Rxfrm)) == *addr))
+						(FrameGetAddr(&(ptInst->Rxfrm)) == *ptAddr))
 				{
-					if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_WRITE_ERROR)
+					if (FrameGetCmd(&(ptInst->Rxfrm)) == HSP_REP_WRITE_ERROR)
 					{
-						*cmd = frame_get_cmd(&(ptInst->Rxfrm));
+						*ptCmd = FrameGetCmd(&(ptInst->Rxfrm));
 						ptInst->eState = HSP_CANCEL;
 					}
-					else if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_ACK)
+					else if (FrameGetCmd(&(ptInst->Rxfrm)) == HSP_REP_ACK)
 					{
 						if (ptInst->u16Pending)
 						{
 							/* Prepare next frame */
 							if (ptInst->sz > HSP_FRM_STA_SZ)
 							{
-								frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_SEG, &data[*sz-ptInst->sz], NULL, 0, false);
+								FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, *ptAddr, *ptCmd, HSP_FRM_SEG, &ptData[*ptSz-ptInst->sz], NULL, 0, false);
 							}
 							else if (ptInst->sz == HSP_FRM_STA_SZ)
 							{
-								frame_create(&(ptInst->Txfrm), *addr, *cmd, HSP_FRM_NOTSEG, &data[*sz-ptInst->sz], NULL, 0, false);
+								FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, *ptAddr, *ptCmd, HSP_FRM_NOTSEG, &ptData[*ptSz-ptInst->sz], NULL, 0, false);
 							}
 							else
 							{
 								/* Dummy message, allow reception of last frame CRC */
 								ptInst->u16Pending = 0;
-								frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
+								FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, *ptAddr, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
 							}
 							ptInst->eState = HSP_WRITE_REQUEST_ACK;
 						}
 						else
 						{
-							*cmd = frame_get_cmd(&(ptInst->Rxfrm));
+							*ptCmd = FrameGetCmd(&(ptInst->Rxfrm));
 							ptInst->eState = HSP_SUCCESS;
-							*sz = 4;
+							*ptSz = 4;
 						}
 				   }
 				   else
@@ -207,7 +212,7 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 			/* Cancel init transaction */
 			if (HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY)
 			{
-				frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
+				FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
 				HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
 				ptInst->eState = HSP_ERROR;
 			}
@@ -221,7 +226,8 @@ hsp_write_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *d
 }
 
 EHspStatus
-hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data)
+HspReadSpiMaster(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode,
+				 uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *ptData)
 {
 	switch(ptInst->eState)
 	{
@@ -233,13 +239,13 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 			if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
 			{
 				/* Send read request */
-				frame_create(&(ptInst->Txfrm), *addr, HSP_REQ_READ, HSP_FRM_NOTSEG, data, NULL, 0, false);
+				FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, *ptAddr, HSP_REQ_READ, HSP_FRM_NOTSEG, ptData, NULL, 0, false);
 				*ptInst->pu16Irq = 0;
 				HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
 				ptInst->sz = 0;
 				/* Note: We prepare the next frame before checking the IRQ to improve
 				* the timing of the system */
-				frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
+				FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
 				ptInst->eState = HSP_READ_REQUEST_ACK;
 			}
 			break;
@@ -259,20 +265,20 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 			if (*ptInst->pu16Irq == 1)
 			{
 				/* Check reception */
-				if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) && (frame_get_addr(&(ptInst->Rxfrm)) == *addr))
+				if ((MX_SPI1_CheckCrc(ptInst->phSpi) == true) && (FrameGetAddr(&(ptInst->Rxfrm)) == *ptAddr))
 				{
 					/* Copy read data to buffer - Also copy it in case of error msg */
-					size_t szReaded = frame_get_static_data(&(ptInst->Rxfrm), data);
-					data += szReaded;
+					size_t szReaded = FrameGetStaticData(&(ptInst->Rxfrm), ptData);
+					ptData += szReaded;
 					ptInst->sz += szReaded;
-					*cmd = frame_get_cmd(&(ptInst->Rxfrm));
-					if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_READ_ERROR)
+					*ptCmd = FrameGetCmd(&(ptInst->Rxfrm));
+					if (FrameGetCmd(&(ptInst->Rxfrm)) == HSP_REP_READ_ERROR)
 					{
 						ptInst->eState = HSP_CANCEL;
 					}
-					else if (frame_get_cmd(&(ptInst->Rxfrm)) == HSP_REP_ACK)
+					else if (FrameGetCmd(&(ptInst->Rxfrm)) == HSP_REP_ACK)
 					{
-						if(frame_get_segmented(&(ptInst->Rxfrm)) != false)
+						if(FrameGetSegmented(&(ptInst->Rxfrm)) != false)
 						{
 							ptInst->eState = HSP_READ_REQUEST_ACK;
 						}
@@ -296,7 +302,7 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 			/* Cancel init transaction */
 			if (HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY)
 			{
-				frame_create(&(ptInst->Txfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
+				FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, NULL, NULL, 0, false);
 				HspSPITransfer(ptInst, &(ptInst->Txfrm),  &(ptInst->Rxfrm));
 				ptInst->eState = HSP_ERROR;
 			}
@@ -310,7 +316,8 @@ hsp_read_spi_master(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *da
 }
 
 EHspStatus
-HspReadUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *ptData)
+HspReadUartSlave(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode,
+				 uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *ptData)
 {
     switch(ptInst->eState)
     {
@@ -322,9 +329,10 @@ HspReadUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *p
 			if (HAL_UART_GetState(ptInst->phUsart) == HAL_UART_STATE_READY)
 			{
 				if (HAL_UART_Receive(ptInst->phUsart, (uint8_t*)ptInst->Rxfrm.buf,
-						HSP_FRM_STATIC_SIZE_BYTES, 100) == HAL_OK)
+						HSP_UART_FRM_STATIC_SIZE_BYTES, 100) == HAL_OK)
 				{
-					ptInst->Rxfrm.sz = HSP_FRM_STATIC_SIZE_BYTES/2;
+					ptInst->Rxfrm.tFrameType = UART_FRAME;
+					ptInst->Rxfrm.sz = HSP_UART_FRM_STATIC_SIZE_BYTES/2;
 					uint16_t u16Tmp;
 					for (int i = 0; i < ptInst->Rxfrm.sz; i++)
 					{
@@ -334,13 +342,15 @@ HspReadUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *p
 					}
 					if (FrameCheckCRC(&ptInst->Rxfrm))
 					{
-						*ptAddr = frame_get_addr(&ptInst->Rxfrm);
-						*ptCmd = frame_get_cmd(&ptInst->Rxfrm);
-						ptInst->sz += frame_get_static_data(&ptInst->Rxfrm, &ptData[ptInst->sz]);
+						*ptNode = FrameGetNode(&ptInst->Rxfrm);
+						*ptSubNode = FrameGetSubNode(&ptInst->Rxfrm);
+						*ptAddr = FrameGetAddr(&ptInst->Rxfrm);
+						*ptCmd = FrameGetCmd(&ptInst->Rxfrm);
+						ptInst->sz += FrameGetStaticData(&ptInst->Rxfrm, &ptData[ptInst->sz]);
 
 						/** If request is segmented type */
 						if (ptInst->sz > (HSP_FRM_STATIC_SIZE_BYTES/2) ||
-								(frame_get_segmented(&ptInst->Rxfrm) == 1))
+								(FrameGetSegmented(&ptInst->Rxfrm) == 1))
 						{
 							if (ptInst->sz > (size_t)HSP_FRM_MAX_DATA_SZ)
 							{
@@ -372,7 +382,7 @@ HspReadUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *p
     	case HSP_READ_REQUEST_ACK:
     		if (HAL_UART_GetState(ptInst->phUsart) == HAL_UART_STATE_READY)
     		{
-				frame_create(&(ptInst->Txfrm), 0, HSP_READ_REQUEST_ACK, HSP_FRM_NOTSEG, NULL, NULL, 0, true);
+				FrameCreate(&(ptInst->Txfrm), UART_FRAME, 0, 0, 0, HSP_READ_REQUEST_ACK, HSP_FRM_NOTSEG, NULL, NULL, 0, true);
 
 				uint16_t u16Tmp;
 				for (int i = 0; i < ptInst->Txfrm.sz; i++)
@@ -384,7 +394,7 @@ HspReadUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *p
 
 				HAL_UART_Transmit(ptInst->phUsart, (uint8_t*)ptInst->Txfrm.buf, (ptInst->Txfrm.sz * 2), 100);
 
-				if (frame_get_segmented(&ptInst->Rxfrm) == 0)
+				if (FrameGetSegmented(&ptInst->Rxfrm) == 0)
 				{
 					ptInst->eState = HSP_SUCCESS;
 				}
@@ -402,7 +412,8 @@ HspReadUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *p
 }
 
 EHspStatus
-HSPWriteUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *ptData, size_t *ptSz)
+HSPWriteUartSlave(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode,
+				  uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *ptData, size_t *ptSz)
 {
 	switch(ptInst->eState)
 	{
@@ -415,11 +426,13 @@ HSPWriteUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *
 		{
 			if (*ptSz <= 4)
 			{
-				frame_create(&ptInst->Txfrm, *ptAddr, *ptCmd, HSP_FRM_NOTSEG, &ptData[(ptInst->sz - *ptSz)], NULL, 0, true);
+				FrameCreate(&ptInst->Txfrm, UART_FRAME, *ptNode, *ptSubNode, *ptAddr, *ptCmd,
+							HSP_FRM_NOTSEG, &ptData[(ptInst->sz - *ptSz)], NULL, 0, true);
 			}
 			else
 			{
-				frame_create(&ptInst->Txfrm, *ptAddr, *ptCmd, HSP_FRM_SEG, &ptData[(ptInst->sz - *ptSz)], NULL, 0, true);
+				FrameCreate(&ptInst->Txfrm, UART_FRAME, *ptNode, *ptSubNode, *ptAddr, *ptCmd,
+							HSP_FRM_SEG, &ptData[(ptInst->sz - *ptSz)], NULL, 0, true);
 			}
 			uint16_t u16Tmp;
 			for (int i = 0; i < ptInst->Txfrm.sz; i++)
@@ -429,7 +442,7 @@ HSPWriteUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *
 						((u16Tmp & 0xff00) >> 8);
 			}
 			if (HAL_UART_Transmit(ptInst->phUsart, (uint8_t*)&ptInst->Txfrm.buf,
-					HSP_FRM_STATIC_SIZE_BYTES, 100) == HAL_OK)
+					HSP_UART_FRM_STATIC_SIZE_BYTES, 100) == HAL_OK)
 			{
 				ptInst->eState = HSP_SUCCESS;
 			}
@@ -447,7 +460,7 @@ HSPWriteUartSlave(HspInst* ptInst, uint16_t *ptAddr, uint16_t *ptCmd, uint16_t *
     return ptInst->eState;
 }
 
-EHspStatus hsp_cyclic_spi_tranfer(HspInst* ptInst, uint16_t *in_buf, uint16_t *out_buf)
+EHspStatus HspCyclicSpiTranfer(HspInst* ptInst, uint16_t *ptInBuf, uint16_t *ptOutBuf)
 {
     switch(ptInst->eState)
     {
@@ -455,7 +468,7 @@ EHspStatus hsp_cyclic_spi_tranfer(HspInst* ptInst, uint16_t *in_buf, uint16_t *o
 		/* Wait fall IRQ indicating received data */
 		if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
 		{
-			frame_create(&(ptInst->Rxfrm), 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, in_buf, out_buf, 3, false);
+			FrameCreate(&(ptInst->Rxfrm), FRAME, 0, 0, 0, HSP_REQ_IDLE, HSP_FRM_NOTSEG, ptInBuf, ptOutBuf, 3, false);
 
      	    ptInst->eState = HSP_CYCLIC_ANSWER;
             /* Now we just need to send the already built frame */
