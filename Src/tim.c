@@ -82,24 +82,19 @@ void MX_TIM6_Init(void)
 /* TIM7 init function */
 void MX_TIM7_Init(void)
 {
-  TIM_MasterConfigTypeDef sMasterConfig;
 
   htim7.Instance = TIM7;
-  htim7.Init.Prescaler = 42;
+  htim7.Init.Prescaler = 40000;
   htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim7.Init.Period = 50;
+  htim7.Init.Period = 500;
   if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
-
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
+  if (HAL_TIM_Base_Start_IT(&htim7) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
-
 }
 
 void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
@@ -164,13 +159,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 } 
 
 /* USER CODE BEGIN 1 */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-	if(htim->Instance==TIM7)
-	{
-		ulHighFrequencyTimerTicks++;
-	}
-}
+
 /* USER CODE END 1 */
 
 /**

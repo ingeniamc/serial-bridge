@@ -344,7 +344,6 @@ void StartMcbSlaveTask(void const * argument)
 				}
 			}while ((pMcbMsg->eStatus != MCB_MESSAGE_SUCCESS) && ((u32NumTry++) < COMMS_NUM_TRY));
 		}
-		osDelay(1);
 	}
   /* USER CODE END StartMcbSlaveTask */
 }
@@ -376,7 +375,6 @@ void StartBridgeTask(void const * argument)
 				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);
 			}
 		}
-		osDelay(1);
 	}
   /* USER CODE END StartBridgeTask */
 }

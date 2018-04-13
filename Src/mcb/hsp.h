@@ -6,6 +6,7 @@
 #include "spi.h"
 #include "usart.h"
 #include "frame.h"
+#include "tim.h"
 
 /** Hsp communication states */
 typedef enum

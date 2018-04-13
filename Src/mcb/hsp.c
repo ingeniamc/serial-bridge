@@ -9,6 +9,7 @@
 #include "cmsis_os.h"
 
 static uint16_t u16Irq;
+static uint16_t bAbortFlag;
 
 static void
 HspSPITransfer(const HspInst* ptInst, TFrame *tInFrame, TFrame *tOutFrame);
@@ -84,6 +85,8 @@ HspInit(HspInst* ptInst, EHspIntf eIntf, EHspMode eMode)
 	}
 	ptInst->pu16Irq = &u16Irq;
 	*ptInst->pu16Irq = 0;
+
+	bAbortFlag = false;
 }
 
 void HspDeinit(HspInst* ptInst)
@@ -326,83 +329,70 @@ HspReadUartSlave(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode,
     		ptInst->sz = 0;
     		break;
     	case HSP_READ_REQUEST:
-			if (HAL_UART_GetState(ptInst->phUsart) == HAL_UART_STATE_READY)
+			if (HAL_UART_Receive_DMA(ptInst->phUsart, (uint8_t*)ptInst->Rxfrm.buf,
+					HSP_UART_FRM_STATIC_SIZE_BYTES) == HAL_OK)
 			{
-				if (HAL_UART_Receive_DMA(ptInst->phUsart, (uint8_t*)ptInst->Rxfrm.buf,
-						HSP_UART_FRM_STATIC_SIZE_BYTES) == HAL_OK)
+				bAbortFlag = false;
+				ptInst->Rxfrm.tFrameType = UART_FRAME;
+				ptInst->Rxfrm.sz = HSP_UART_FRM_STATIC_SIZE_BYTES/2;
+				uint16_t u16Tmp;
+				for (int i = 0; i < ptInst->Rxfrm.sz; i++)
 				{
-					ptInst->Rxfrm.tFrameType = UART_FRAME;
-					ptInst->Rxfrm.sz = HSP_UART_FRM_STATIC_SIZE_BYTES/2;
-					uint16_t u16Tmp;
-					for (int i = 0; i < ptInst->Rxfrm.sz; i++)
-					{
-						u16Tmp = ptInst->Rxfrm.buf[i];
-						ptInst->Rxfrm.buf[i] = ((u16Tmp & 0x00ff) << 8) |
-								((u16Tmp & 0xff00) >> 8);
-					}
-					if (FrameCheckCRC(&ptInst->Rxfrm))
-					{
-						*ptNode = FrameGetNode(&ptInst->Rxfrm);
-						*ptSubNode = FrameGetSubNode(&ptInst->Rxfrm);
-						*ptAddr = FrameGetAddr(&ptInst->Rxfrm);
-						*ptCmd = FrameGetCmd(&ptInst->Rxfrm);
-						ptInst->sz += FrameGetStaticData(&ptInst->Rxfrm, &ptData[ptInst->sz]);
+					u16Tmp = ptInst->Rxfrm.buf[i];
+					ptInst->Rxfrm.buf[i] = ((u16Tmp & 0x00ff) << 8) |
+							((u16Tmp & 0xff00) >> 8);
+				}
+				if (FrameCheckCRC(&ptInst->Rxfrm))
+				{
+					*ptNode = FrameGetNode(&ptInst->Rxfrm);
+					*ptSubNode = FrameGetSubNode(&ptInst->Rxfrm);
+					*ptAddr = FrameGetAddr(&ptInst->Rxfrm);
+					*ptCmd = FrameGetCmd(&ptInst->Rxfrm);
+					ptInst->sz += FrameGetStaticData(&ptInst->Rxfrm, &ptData[ptInst->sz]);
 
-						/** If request is segmented type */
-						if (ptInst->sz > (HSP_FRM_STATIC_SIZE_BYTES/2) ||
-								(FrameGetSegmented(&ptInst->Rxfrm) == 1))
+					/** If request is segmented type */
+					if (ptInst->sz > (HSP_FRM_STATIC_SIZE_BYTES/2) ||
+							(FrameGetSegmented(&ptInst->Rxfrm) == 1))
+					{
+						if (ptInst->sz > (size_t)HSP_FRM_MAX_DATA_SZ)
 						{
-							if (ptInst->sz > (size_t)HSP_FRM_MAX_DATA_SZ)
-							{
-								ptInst->eState = HSP_ERROR;
-							}
-							ptInst->eState = HSP_READ_REQUEST_ACK;
+							ptInst->eState = HSP_ERROR;
 						}
-						else
-						{
-							ptInst->eState = HSP_SUCCESS;
-						}
+						ptInst->eState = HSP_READ_REQUEST_ACK;
 					}
 					else
 					{
-						/** CRC Error */
-						ptInst->eState = HSP_ERROR;
+						ptInst->eState = HSP_SUCCESS;
 					}
 				}
 				else
 				{
+					/** CRC Error */
 					ptInst->eState = HSP_ERROR;
 				}
 			}
-			else
-			{
-				ptInst->eState = HSP_ERROR;
-			}
 			break;
     	case HSP_READ_REQUEST_ACK:
-    		if (HAL_UART_GetState(ptInst->phUsart) == HAL_UART_STATE_READY)
-    		{
-				FrameCreate(&(ptInst->Txfrm), UART_FRAME, 0, 0, 0, HSP_READ_REQUEST_ACK, HSP_FRM_NOTSEG, NULL, NULL, 0, true);
+			FrameCreate(&(ptInst->Txfrm), UART_FRAME, 0, 0, 0, HSP_READ_REQUEST_ACK, HSP_FRM_NOTSEG, NULL, NULL, 0, true);
 
-				uint16_t u16Tmp;
-				for (int i = 0; i < ptInst->Txfrm.sz; i++)
-				{
-					u16Tmp = ptInst->Txfrm.buf[i];
-					ptInst->Txfrm.buf[i] = ((u16Tmp & 0x00ff) << 8) |
-							((u16Tmp & 0xff00) >> 8);
-				}
+			uint16_t u16Tmp;
+			for (int i = 0; i < ptInst->Txfrm.sz; i++)
+			{
+				u16Tmp = ptInst->Txfrm.buf[i];
+				ptInst->Txfrm.buf[i] = ((u16Tmp & 0x00ff) << 8) |
+						((u16Tmp & 0xff00) >> 8);
+			}
 
-				HAL_UART_Transmit_DMA(ptInst->phUsart, (uint8_t*)ptInst->Txfrm.buf, (ptInst->Txfrm.sz * 2));
+			HAL_UART_Transmit_DMA(ptInst->phUsart, (uint8_t*)ptInst->Txfrm.buf, (ptInst->Txfrm.sz * 2));
 
-				if (FrameGetSegmented(&ptInst->Rxfrm) == 0)
-				{
-					ptInst->eState = HSP_SUCCESS;
-				}
-				else
-				{
-					ptInst->eState = HSP_READ_REQUEST;
-				}
-    		}
+			if (FrameGetSegmented(&ptInst->Rxfrm) == 0)
+			{
+				ptInst->eState = HSP_SUCCESS;
+			}
+			else
+			{
+				ptInst->eState = HSP_READ_REQUEST;
+			}
     		break;
 		default:
 			ptInst->eState = HSP_STANDBY;
@@ -496,5 +486,39 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		default:
 			u16Irq = 1;
 			break;
+	}
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(htim->Instance == TIM7)
+	{
+
+		/*
+		 *   htim7.Init.Prescaler = 40000;
+  htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim7.Init.Period = 500;
+
+  == 240 ms
+		 */
+		uint16_t u16PendingDMAFifoBytes = __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
+		if (u16PendingDMAFifoBytes < HSP_UART_FRM_STATIC_SIZE_BYTES)
+		{
+			if (bAbortFlag)
+			{
+				HAL_UART_Abort(&huart2);
+				HAL_DMA_Abort(&hdma_usart2_rx);
+				bAbortFlag = false;
+			}
+			else
+			{
+				bAbortFlag = true;
+			}
+		}
+		else
+		{
+			bAbortFlag = false;
+		}
+
 	}
 }
