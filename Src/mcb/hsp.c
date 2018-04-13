@@ -328,8 +328,8 @@ HspReadUartSlave(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode,
     	case HSP_READ_REQUEST:
 			if (HAL_UART_GetState(ptInst->phUsart) == HAL_UART_STATE_READY)
 			{
-				if (HAL_UART_Receive(ptInst->phUsart, (uint8_t*)ptInst->Rxfrm.buf,
-						HSP_UART_FRM_STATIC_SIZE_BYTES, 100) == HAL_OK)
+				if (HAL_UART_Receive_DMA(ptInst->phUsart, (uint8_t*)ptInst->Rxfrm.buf,
+						HSP_UART_FRM_STATIC_SIZE_BYTES) == HAL_OK)
 				{
 					ptInst->Rxfrm.tFrameType = UART_FRAME;
 					ptInst->Rxfrm.sz = HSP_UART_FRM_STATIC_SIZE_BYTES/2;
@@ -392,7 +392,7 @@ HspReadUartSlave(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode,
 							((u16Tmp & 0xff00) >> 8);
 				}
 
-				HAL_UART_Transmit(ptInst->phUsart, (uint8_t*)ptInst->Txfrm.buf, (ptInst->Txfrm.sz * 2), 100);
+				HAL_UART_Transmit_DMA(ptInst->phUsart, (uint8_t*)ptInst->Txfrm.buf, (ptInst->Txfrm.sz * 2));
 
 				if (FrameGetSegmented(&ptInst->Rxfrm) == 0)
 				{
@@ -441,8 +441,8 @@ HSPWriteUartSlave(HspInst* ptInst, uint16_t *ptNode, uint16_t *ptSubNode,
 				ptInst->Txfrm.buf[i] = ((u16Tmp & 0x00ff) << 8) |
 						((u16Tmp & 0xff00) >> 8);
 			}
-			if (HAL_UART_Transmit(ptInst->phUsart, (uint8_t*)&ptInst->Txfrm.buf,
-					HSP_UART_FRM_STATIC_SIZE_BYTES, 100) == HAL_OK)
+			if (HAL_UART_Transmit_DMA(ptInst->phUsart, (uint8_t*)&ptInst->Txfrm.buf,
+					HSP_UART_FRM_STATIC_SIZE_BYTES) == HAL_OK)
 			{
 				ptInst->eState = HSP_SUCCESS;
 			}
