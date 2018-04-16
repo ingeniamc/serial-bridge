@@ -126,7 +126,7 @@ int main(void)
 
   /** Disable mem IC of the develop board */
 
-  HAL_TIM_Base_Start_IT(&htim7);
+  HAL_TIM_Base_Start_IT(TIMER7_BASE_ADDR);
   HAL_GPIO_WritePin(CS_I2C_SPI_GPIO_Port, CS_I2C_SPI_Pin, GPIO_PIN_SET);
 
   /* USER CODE END 2 */

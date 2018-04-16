@@ -242,9 +242,6 @@ void HspFunc(void const * argument)
     /* Infinite loop */
     for (;;)
     {
-        /** Task is locked until a request to Mcb interface
-         * is requested.
-         */
         MsgOut = osMessageGet(HspTxHandle, osWaitForever);
         if (MsgOut.status == osEventMessage)
         {

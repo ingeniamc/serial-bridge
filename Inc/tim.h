@@ -66,6 +66,8 @@ extern TIM_HandleTypeDef htim7;
 
 /* USER CODE BEGIN Private defines */
 
+#define TIMER7_BASE_ADDR &htim7
+
 /* USER CODE END Private defines */
 
 extern void _Error_Handler(char *, int);
