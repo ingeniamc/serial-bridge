@@ -111,8 +111,8 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
 void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
-        						   StackType_t **ppxIdleTaskStackBuffer,
-        						   uint32_t *pulIdleTaskStackSize);
+									StackType_t **ppxIdleTaskStackBuffer,
+									uint32_t *pulIdleTaskStackSize);
 
 /* Hook prototypes */
 void configureTimerForRunTimeStats(void);
@@ -136,7 +136,8 @@ static StaticTask_t xIdleTaskTCBBuffer;
 static StackType_t xIdleStack[configMINIMAL_STACK_SIZE];
 
 void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
-        StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize)
+									StackType_t **ppxIdleTaskStackBuffer,
+									uint32_t *pulIdleTaskStackSize)
 {
 	*ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
 	*ppxIdleTaskStackBuffer = &xIdleStack[0];
@@ -173,27 +174,27 @@ void MX_FREERTOS_Init(void)
 	/* Create the thread(s) */
 	/* definition and creation of defaultTask */
 	osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128,
-	                  defaultTaskBuffer, &defaultTaskControlBlock);
+						defaultTaskBuffer, &defaultTaskControlBlock);
 	defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
 	/* definition and creation of HspTask */
 	osThreadStaticDef(HspTask, HspFunc, osPriorityLow, 0, 256, HspBuffer,
-	                  &HspControlBlock);
+						&HspControlBlock);
 	HspTaskHandle = osThreadCreate(osThread(HspTask), NULL);
 
 	/* definition and creation of UserTask */
 	osThreadStaticDef(UserTask, StartUserTask, osPriorityIdle, 0, 1024,
-	                  UserTaskBuffer, &UserTaskControlBlock);
+						UserTaskBuffer, &UserTaskControlBlock);
 	UserTaskHandle = osThreadCreate(osThread(UserTask), NULL);
 
 	/* definition and creation of McbSlaveTask */
 	osThreadStaticDef(McbSlaveTask, StartMcbSlaveTask, osPriorityBelowNormal, 0,
-	                  1024, McbSlaveTaskBuffer, &McbSlaveTaskControlBlock);
+						1024, McbSlaveTaskBuffer, &McbSlaveTaskControlBlock);
 	McbSlaveTaskHandle = osThreadCreate(osThread(McbSlaveTask), NULL);
 
 	/* definition and creation of BridgeTask */
 	osThreadStaticDef(BridgeTask, StartBridgeTask, osPriorityLow, 0, 1024,
-	                  BridgeTaskBuffer, &BridgeTaskControlBlock);
+						BridgeTaskBuffer, &BridgeTaskControlBlock);
 	BridgeTaskHandle = osThreadCreate(osThread(BridgeTask), NULL);
 
 	/* USER CODE BEGIN RTOS_THREADS */
@@ -211,12 +212,12 @@ void MX_FREERTOS_Init(void)
 
 	/* definition and creation of UartSlaveTx */
 	osMessageQStaticDef(UartSlaveTx, 16, McbMsg*, UartSlaveTxBuffer,
-	                    &UartSlaveTxControlBlock);
+						&UartSlaveTxControlBlock);
 	UartSlaveTxHandle = osMessageCreate(osMessageQ(UartSlaveTx), NULL);
 
 	/* definition and creation of UartSlaveRx */
 	osMessageQStaticDef(UartSlaveRx, 16, McbMsg*, UartSlaveRxBuffer,
-	                    &UartSlaveRxControlBlock);
+						&UartSlaveRxControlBlock);
 	UartSlaveRxHandle = osMessageCreate(osMessageQ(UartSlaveRx), NULL);
 
 	/* USER CODE BEGIN RTOS_QUEUES */
@@ -287,7 +288,7 @@ void HspFunc(void const * argument)
 				}
 
 			}while ((pMcbMsg->eStatus != MCB_MESSAGE_SUCCESS)
-			        && ((u32NumTry++) < COMMS_NUM_TRY));
+					&& ((u32NumTry++) < COMMS_NUM_TRY));
 
 			osMessagePut(HspRxHandle, (uint32_t) pMcbMsg,
 			osWaitForever);
@@ -339,8 +340,8 @@ void StartMcbSlaveTask(void const * argument)
 					do
 					{
 						pMcbSlaveMssg->eStatus = mcbWrite(&dvrSlave,
-						                                  pMcbSlaveMssg,
-						                                  DFLT_TIMEOUT);
+															pMcbSlaveMssg,
+															DFLT_TIMEOUT);
 
 						if (pMcbSlaveMssg->eStatus != MCB_MESSAGE_SUCCESS)
 						{
@@ -348,7 +349,7 @@ void StartMcbSlaveTask(void const * argument)
 							osDelay(100);
 						}
 					}while ((pMcbSlaveMssg->eStatus != MCB_MESSAGE_SUCCESS)
-					        && ((u32NumTry++) < COMMS_NUM_TRY));
+							&& ((u32NumTry++) < COMMS_NUM_TRY));
 				}
 				else
 				{
