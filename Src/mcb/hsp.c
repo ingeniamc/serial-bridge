@@ -116,7 +116,7 @@ EHspStatus HspWriteSpiMaster(HspInst* ptInst, uint16_t* ptNode,
             ptInst->bPending = false;
             ptInst->eState = HSP_WRITE_REQUEST;
             break;
-		case HSP_WRITE_REQUEST:
+        case HSP_WRITE_REQUEST:
             if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
             {
                 /* Check if static transmission should be segmented */
@@ -125,7 +125,7 @@ EHspStatus HspWriteSpiMaster(HspInst* ptInst, uint16_t* ptNode,
                     FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, *ptAddr, *ptCmd,
                                 HSP_FRM_SEG, &ptData[*ptSz - ptInst->sz], NULL,
                                 0, false);
-                    ptInst->bPending = false;
+                    ptInst->bPending = true;
                 }
                 else
                 {
@@ -135,13 +135,13 @@ EHspStatus HspWriteSpiMaster(HspInst* ptInst, uint16_t* ptNode,
                 }
                 if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY))
                 {
-                    if (ptInst->sz >= HSP_FRM_STA_SZ)
+                    if ((ptInst->sz - HSP_FRM_HEAD_SZ) >= HSP_FRM_STA_SZ)
                     {
                         ptInst->sz -= HSP_FRM_STA_SZ;
                     }
                     *ptInst->pu16Irq = DISABLE;
                     HspSPITransfer(ptInst, &(ptInst->Txfrm), &(ptInst->Rxfrm));
-                    if (ptInst->sz >= HSP_FRM_STA_SZ)
+                    if ((ptInst->sz - HSP_FRM_HEAD_SZ) >= HSP_FRM_STA_SZ)
                     {
                         FrameCreate(&(ptInst->Txfrm), FRAME, 0, 0, *ptAddr,
                                     *ptCmd, HSP_FRM_SEG,
@@ -166,10 +166,7 @@ EHspStatus HspWriteSpiMaster(HspInst* ptInst, uint16_t* ptNode,
                 && (*ptInst->pu16Irq == ENABLE))
             {
                 ptInst->eState = HSP_WRITE_ANSWER;
-                if (ptInst->sz >= HSP_FRM_STA_SZ)
-                {
-                    ptInst->sz -= HSP_FRM_STA_SZ;
-                }
+                ptInst->sz -= HSP_FRM_STA_SZ;
                 *ptInst->pu16Irq = DISABLE;
                 /* Now we just need to send the already built frame */
                 HspSPITransfer(ptInst, &(ptInst->Txfrm), &(ptInst->Rxfrm));
@@ -265,7 +262,7 @@ EHspStatus HspReadSpiMaster(HspInst* ptInst, uint16_t* ptNode,
             *ptInst->pu16Irq = DISABLE;
             ptInst->eState = HSP_READ_REQUEST;
             break;
-		case HSP_READ_REQUEST:
+        case HSP_READ_REQUEST:
             if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4) == GPIO_PIN_SET)
             {
                 /* Send read request */
@@ -282,7 +279,7 @@ EHspStatus HspReadSpiMaster(HspInst* ptInst, uint16_t* ptNode,
                 ptInst->eState = HSP_READ_REQUEST_ACK;
             }
             break;
-		case HSP_READ_REQUEST_ACK:
+        case HSP_READ_REQUEST_ACK:
             /* Check if data is already available (IRQ) */
             if ((HAL_SPI_GetState(ptInst->phSpi) == HAL_SPI_STATE_READY)
                 && (*ptInst->pu16Irq == ENABLE))
@@ -293,7 +290,7 @@ EHspStatus HspReadSpiMaster(HspInst* ptInst, uint16_t* ptNode,
                 ptInst->eState = HSP_READ_ANSWER;
             }
             break;
-		case HSP_READ_ANSWER:
+        case HSP_READ_ANSWER:
             /** Wait until data is received */
             if (*ptInst->pu16Irq == ENABLE)
             {
@@ -374,8 +371,8 @@ EHspStatus HspReadUartSlave(HspInst* ptInst, uint16_t* ptNode,
                 for (int i = 0; i < ptInst->Rxfrm.sz; i++)
                 {
                     u16Tmp = ptInst->Rxfrm.buf[i];
-                    ptInst->Rxfrm.buf[i] = ((u16Tmp & 0x00ff) << 8)
-                            | ((u16Tmp & 0xff00) >> 8);
+                    ptInst->Rxfrm.buf[i] = ((u16Tmp & 0x00ff) << 8) |
+                                            ((u16Tmp & 0xff00) >> 8);
                 }
                 if (FrameCheckCRC(&ptInst->Rxfrm))
                 {
@@ -387,8 +384,8 @@ EHspStatus HspReadUartSlave(HspInst* ptInst, uint16_t* ptNode,
                                                      &ptData[ptInst->sz]);
 
                     /** If request is segmented type */
-                    if (ptInst->sz > (HSP_FRM_STATIC_SIZE_BYTES / SIZE_WORDS)
-                        || (FrameGetSegmented(&ptInst->Rxfrm) == ENABLE))
+                    if (ptInst->sz > HSP_FRM_STA_SZ ||
+                        (FrameGetSegmented(&ptInst->Rxfrm) == ENABLE))
                     {
                         if (ptInst->sz > (size_t)HSP_FRM_MAX_DATA_SZ)
                         {
@@ -417,8 +414,8 @@ EHspStatus HspReadUartSlave(HspInst* ptInst, uint16_t* ptNode,
             for (int i = 0; i < ptInst->Txfrm.sz; i++)
             {
                 u16Tmp = ptInst->Txfrm.buf[i];
-                ptInst->Txfrm.buf[i] = ((u16Tmp & 0x00ff) << 8)
-                        | ((u16Tmp & 0xff00) >> 8);
+                ptInst->Txfrm.buf[i] = ((u16Tmp & 0x00ff) << 8) |
+                                        ((u16Tmp & 0xff00) >> 8);
             }
 
             HAL_UART_Transmit_DMA(ptInst->phUsart, (uint8_t*)ptInst->Txfrm.buf,
@@ -452,7 +449,6 @@ EHspStatus HSPWriteUartSlave(HspInst* ptInst, uint16_t *ptNode,
             break;
         case HSP_WRITE_ANSWER:
         case HSP_WRITE_ANSWER_PENDING:
-        {
             if (*ptSz <= HSP_FRM_STA_SZ)
             {
                 FrameCreate(&ptInst->Txfrm, UART_FRAME, *ptNode, *ptSubNode,
@@ -471,8 +467,8 @@ EHspStatus HSPWriteUartSlave(HspInst* ptInst, uint16_t *ptNode,
             for (int i = 0; i < ptInst->Txfrm.sz; i++)
             {
                 u16Tmp = ptInst->Txfrm.buf[i];
-                ptInst->Txfrm.buf[i] = ((u16Tmp & 0x00ff) << 8)
-                        | ((u16Tmp & 0xff00) >> 8);
+                ptInst->Txfrm.buf[i] = ((u16Tmp & 0x00ff) << 8) |
+                                        ((u16Tmp & 0xff00) >> 8);
             }
             if (HAL_UART_Transmit_DMA(ptInst->phUsart,
                                       (uint8_t*)&ptInst->Txfrm.buf,
@@ -485,7 +481,6 @@ EHspStatus HSPWriteUartSlave(HspInst* ptInst, uint16_t *ptNode,
             {
                 ptInst->eState = HSP_ERROR;
             }
-        }
             break;
         default:
             ptInst->eState = HSP_STANDBY;
@@ -541,8 +536,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
 
         /* Timer 7 Interrupt, 240 ms */
-        uint16_t u16PendingDMAFifoBytes = __HAL_DMA_GET_COUNTER(
-                &hdma_usart2_rx);
+        uint16_t u16PendingDMAFifoBytes =
+                __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
         if (u16PendingDMAFifoBytes < HSP_UART_FRM_STATIC_SIZE_BYTES)
         {
             if (bAbortFlag)

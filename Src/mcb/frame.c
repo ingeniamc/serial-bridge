@@ -6,10 +6,10 @@
 #include "error.h"
 
 /** Frame description
- * Word 0      - Header
- * Word 1..4   - Static data
- * Word 5..N-1 - Dynamic data (optional)
- * Word N      - CRC
+ * Word 0       - Header
+ * Word 1..4    - Static data
+ * Word 5..N-1  - Dynamic data (optional)
+ * Word N       - CRC
  */
 
 /** Uart frame description
@@ -117,7 +117,7 @@ IER_RET FrameCreate(TFrame* tFrame, TFrameType tFrameType, uint16_t u16Node,
             /* Compute CRC and add it to buffer */
             tFrame->buf[(u16HeadSz + HSP_FRM_STA_SZ) + szDyn] =
                         FrameCRC(tFrame);
-            tFrame->sz += 1;
+            tFrame->sz += HSP_FRM_CRC_SZ;
         }
         break;
     }
@@ -195,7 +195,7 @@ uint16_t FrameGetStaticData(const TFrame* tFrame, uint16_t* buf)
     }
 
     memcpy(buf, &tFrame->buf[(u16HeadField + HSP_FRM_HEAD_SZ)],
-           sizeof(tFrame->buf[0]) * HSP_FRM_STA_SZ);
+           (sizeof(tFrame->buf[0]) * HSP_FRM_STA_SZ));
     return HSP_FRM_STA_SZ;
 }
 

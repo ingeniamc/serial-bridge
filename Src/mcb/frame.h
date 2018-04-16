@@ -15,7 +15,7 @@
 #define HSP_FRM_MAX_DATA_SZ     128U
 
 /** Ingenia protocol uart frame statatic buffer node header size */
-#define HSP_NODE_FRM_HDR_SZ		1U
+#define HSP_NODE_FRM_HDR_SZ     1U
 /** Ingenia protocol frame static buffer header size */
 #define HSP_FRM_HEAD_SZ			1U
 /** Ingenia protocol frame static buffer size */
@@ -49,14 +49,19 @@
 /** Type of frames */
 typedef enum
 {
+    /** Uart frame (Node Hdr + Hdr + data + crc) */
 	UART_FRAME = 0,
+	/** Frame (Hdr + data + crc) */
 	FRAME
 }TFrameType;
 
 /** High speed Ingenia protocol frame */
 typedef struct {
+    /** Type of frame */
 	TFrameType 	tFrameType;
+	/** Data buffer */
     uint16_t    buf[HSP_FRM_MAX_DATA_SZ];
+    /** Frame size */
     uint16_t    sz;
 }TFrame;
 
