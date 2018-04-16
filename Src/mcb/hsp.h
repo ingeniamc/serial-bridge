@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "spi.h"
 #include "usart.h"
 #include "frame.h"
@@ -36,7 +37,7 @@ typedef enum
 	HSP_CANCEL,
 	/** Transaction error */
 	HSP_ERROR
-}EHspStatus;
+} EHspStatus;
 
 /** Hsp interfaces options */
 typedef enum
@@ -45,7 +46,7 @@ typedef enum
 	SPI_BASED,
 	/** Uart interdace */
 	UART_BASED
-}EHspIntf;
+} EHspIntf;
 
 /** Hsp modes options */
 typedef enum
@@ -54,7 +55,7 @@ typedef enum
 	MASTER_MODE,
 	/** Slave mode */
 	SLAVE_MODE
-}EHspMode;
+} EHspMode;
 typedef struct EHspMode HspMode;
 
 typedef struct HspInst HspInst;
@@ -75,14 +76,17 @@ struct HspInst
 	/** Frame pool for holding tx data */
 	TFrame Txfrm;
 	/** Frame pool for holding rx data */
-    TFrame Rxfrm;
+	TFrame Rxfrm;
 	/** Pending data size to be transmitted/received */
 	size_t sz;
-	uint16_t u16Pending;
+	/** Pending bits flag */
+	bool bPending;
 	/** Write frame */
-	EHspStatus (*write)(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data, size_t *sz);
+	EHspStatus (*write)(HspInst* ptInst, uint16_t *addr, uint16_t *cmd,
+						uint16_t *data, size_t *sz);
 	/** Read frame */
-	EHspStatus (*read)(HspInst* ptInst, uint16_t *addr, uint16_t *cmd, uint16_t *data);
+	EHspStatus (*read)(HspInst* ptInst, uint16_t *addr, uint16_t *cmd,
+						uint16_t *data);
 };
 
 /** Initialize a High speed protocol interface */

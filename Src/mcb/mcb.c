@@ -4,9 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
-void
-mcb_init(McbInst* ptInst, EMcbIntf eIntf,
-		EMcbMode eMode, EMcbRequestMode eReqMode)
+void mcb_init(McbInst* ptInst, EMcbIntf eIntf, EMcbMode eMode,
+			  EMcbRequestMode eReqMode)
 {
 	ptInst->eIntf = eIntf;
 	ptInst->isCyclic = false;
@@ -45,8 +44,7 @@ void mcb_deinit(McbInst* ptInst)
 	hsp_deinit(&ptInst->Hsp);
 }
 
-EMcbReqStatus
-mcbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
+EMcbReqStatus mcbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
 {
 	EMcbReqStatus eResult = MCB_MESSAGE_ERROR;
 	EHspStatus eStatus;
@@ -59,13 +57,17 @@ mcbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
 			uint32_t u32Millis = HAL_GetTick();
 			do
 			{
-				eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0], &mcbMsg->size);
-			}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS) && ((HAL_GetTick() - u32Millis) < u32Timeout));
+				eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->addr,
+				                            &mcbMsg->cmd, &mcbMsg->data[0],
+				                            &mcbMsg->size);
+			}while ((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS)
+			        && ((HAL_GetTick() - u32Millis) < u32Timeout));
 		}
 		else
 		{
 			/** No blocking mode */
-			eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0], &sz);
+			eStatus = ptInst->Hsp.write(&ptInst->Hsp, &mcbMsg->addr,
+			                            &mcbMsg->cmd, &mcbMsg->data[0], &sz);
 		}
 		if (eStatus == HSP_SUCCESS)
 		{
@@ -84,8 +86,7 @@ mcbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
 	return eResult;
 }
 
-EMcbReqStatus
-mcbRead(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
+EMcbReqStatus mcbRead(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
 {
 	EMcbReqStatus eResult = 0;
 	EHspStatus eStatus = HSP_ERROR;
@@ -97,14 +98,17 @@ mcbRead(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout)
 			uint32_t u32Millis = HAL_GetTick();
 			do
 			{
-				eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0]);
-			}while((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS) && ((HAL_GetTick() - u32Millis) < u32Timeout));
+				eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr,
+				                           &mcbMsg->cmd, &mcbMsg->data[0]);
+			}while ((eStatus != HSP_ERROR) && (eStatus != HSP_SUCCESS)
+			        && ((HAL_GetTick() - u32Millis) < u32Timeout));
 			mcbMsg->size = ptInst->Hsp.sz;
 		}
 		else
 		{
 			/** No blocking mode */
-			eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr, &mcbMsg->cmd, &mcbMsg->data[0]);
+			eStatus = ptInst->Hsp.read(&ptInst->Hsp, &mcbMsg->addr,
+			                           &mcbMsg->cmd, &mcbMsg->data[0]);
 		}
 
 		if (eStatus == HSP_SUCCESS)
@@ -158,5 +162,4 @@ int32_t mcb_disable_cyclic(McbInst* ptInst)
 
 	return 0;
 }
-
 

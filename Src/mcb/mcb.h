@@ -11,16 +11,20 @@
 /** Available interfaces */
 typedef enum
 {
+	/** MCB over SPI Interface */
 	MCB_OVER_SPI = 0,
+	/** MCB over UART Interface */
 	MCB_OVER_SERIAL
-}EMcbIntf;
+} EMcbIntf;
 
 /** Available interfaces */
 typedef enum
 {
+	/** MCB as master */
 	MCB_MASTER = 0,
+	/** MCB as slave */
 	MCB_SLAVE
-}EMcbMode;
+} EMcbMode;
 
 typedef enum
 {
@@ -28,7 +32,7 @@ typedef enum
 	MCB_BLOCKING = 0,
 	/* Non Blocking mode, if not ready, return state */
 	MCB_NON_BLOCKING
-}EMcbRequestMode;
+} EMcbRequestMode;
 
 typedef enum
 {
@@ -38,7 +42,7 @@ typedef enum
 	MCB_MESSAGE_SUCCESS,
 	/* Request error */
 	MCB_MESSAGE_ERROR
-}EMcbReqStatus;
+} EMcbReqStatus;
 
 /** Motion control but instance */
 typedef struct
@@ -53,7 +57,7 @@ typedef struct
 	EMcbMode eMode;
 	/** Request mode */
 	EMcbRequestMode eReqMode;
-}McbInst;
+} McbInst;
 
 /** Frame data struct */
 typedef struct
@@ -63,16 +67,16 @@ typedef struct
 	/* Command data */
 	uint16_t cmd;
 	/* Message total size (bytes) */
-	size_t 	 size;
+	size_t size;
 	/* Static data */
 	uint16_t data[HSP_MAX_DATA_SZ];
 	/* Message status */
 	EMcbReqStatus eStatus;
-}McbMsg;
+} McbMsg;
 
 /** Initialization functions */
-void mcb_init(McbInst* ptInst, EMcbIntf eIntf,
-		EMcbMode eMode, EMcbRequestMode eReqMode);
+void mcb_init(McbInst* ptInst, EMcbIntf eIntf, EMcbMode eMode,
+        EMcbRequestMode eReqMode);
 void mcb_deinit(McbInst* ptInst);
 
 /**

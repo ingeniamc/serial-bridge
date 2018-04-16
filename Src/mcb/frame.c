@@ -71,8 +71,8 @@ frame_create(TFrame *tFrame, uint16_t u16Addr, uint8_t u8Cmd, uint8_t u8Pending,
         /* Copy static & dynamic buffer (if any) */
         if (pStaBuf != NULL)
         {
-			memcpy(&tFrame->buf[HSP_FRM_STA_FLD], pStaBuf, (sizeof(tFrame->buf[0]) *
-					HSP_FRM_STA_SZ));
+        	memcpy(&tFrame->buf[HSP_FRM_STA_FLD], pStaBuf, (sizeof(tFrame->buf[0]) *
+        			HSP_FRM_STA_SZ));
         }
         else
         {
@@ -80,8 +80,8 @@ frame_create(TFrame *tFrame, uint16_t u16Addr, uint8_t u8Cmd, uint8_t u8Pending,
 					HSP_FRM_STA_SZ ));
         }
 
-		memcpy(&tFrame->buf[HSP_FRM_DYN_FLD], pDynBuf, (sizeof(tFrame->buf[0]) *
-				szDyn));
+        memcpy(&tFrame->buf[HSP_FRM_DYN_FLD], pDynBuf, (sizeof(tFrame->buf[0]) *
+        		szDyn));
 
 		tFrame->sz = HSP_FRM_HDR_SZ + HSP_FRM_STA_SZ + szDyn;
 		if (calcCRC != false)
