@@ -530,31 +530,25 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     }
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+void TIM7_PeriodElapsedCallback(void)
 {
-    if (htim->Instance == TIM7)
+    uint16_t u16PendingDMAFifoBytes =
+            __HAL_DMA_GET_COUNTER(huart2.hdmarx);
+    if (u16PendingDMAFifoBytes < HSP_UART_FRM_STATIC_SIZE_BYTES)
     {
-
-        /* Timer 7 Interrupt, 240 ms */
-        uint16_t u16PendingDMAFifoBytes =
-                __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
-        if (u16PendingDMAFifoBytes < HSP_UART_FRM_STATIC_SIZE_BYTES)
+        if (bAbortFlag)
         {
-            if (bAbortFlag)
-            {
-                HAL_UART_Abort(&huart2);
-                HAL_DMA_Abort(&hdma_usart2_rx);
-                bAbortFlag = false;
-            }
-            else
-            {
-                bAbortFlag = true;
-            }
+            HAL_UART_Abort(&huart2);
+            HAL_DMA_Abort(huart2.hdmarx);
+            bAbortFlag = false;
         }
         else
         {
-            bAbortFlag = false;
+            bAbortFlag = true;
         }
-
+    }
+    else
+    {
+        bAbortFlag = false;
     }
 }
