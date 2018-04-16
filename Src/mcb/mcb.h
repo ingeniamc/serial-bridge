@@ -62,10 +62,14 @@ typedef struct
 /** Frame data struct */
 typedef struct
 {
+    /* Node data */
+    uint16_t u16Node;
+    /* Subnode data */
+    uint16_t u16SubNode;
     /* Address data */
-    uint16_t addr;
+    uint16_t u16Addr;
     /* Command data */
-    uint16_t cmd;
+    uint16_t u16Cmd;
     /* Message total size (bytes) */
     size_t size;
     /* Static data */
@@ -75,9 +79,9 @@ typedef struct
 } McbMsg;
 
 /** Initialization functions */
-void mcb_init(McbInst* ptInst, EMcbIntf eIntf, EMcbMode eMode,
+void McbInit(McbInst* ptInst, EMcbIntf eIntf, EMcbMode eMode,
               EMcbRequestMode eReqMode);
-void mcb_deinit(McbInst* ptInst);
+void McbDeinit(McbInst* ptInst);
 
 /**
  * Generic write function
@@ -89,7 +93,8 @@ void mcb_deinit(McbInst* ptInst);
  * @param[in] u32Timeout
  *  Timeout duration
  */
-EMcbReqStatus mcbWrite(McbInst* ptInst, McbMsg* mcbMsg, uint32_t u32Timeout);
+EMcbReqStatus
+McbWrite(McbInst* ptInst, McbMsg* mcbMsg, uint32_t u32Timeout);
 
 /**
  * Generic read function
@@ -101,18 +106,23 @@ EMcbReqStatus mcbWrite(McbInst* ptInst, McbMsg* mcbMsg, uint32_t u32Timeout);
  * @param[in] u32Timeout
  *  Timeout duration
  */
-EMcbReqStatus mcbRead(McbInst* ptInst, McbMsg* mcbMsg, uint32_t u32Timeout);
+EMcbReqStatus
+McbRead(McbInst* ptInst, McbMsg* mcbMsg, uint32_t u32Timeout);
 
 /** Motion read/write functions */
 
 /** Mapping functions */
-void* mcb_tx_map(McbInst* ptInst, uint16_t addr, size_t sz);
-void* mcb_rx_map(McbInst* ptInst, uint16_t addr, size_t sz);
+void*
+McbTxMap(McbInst* ptInst, uint16_t u16Addr, size_t sz);
+void*
+McbRxMap(McbInst* ptInst, uint16_t u16Addr, size_t sz);
 
 /** Enabling cyclic mode.
  * Blocking function, while the config is written into driver. */
-int32_t mcb_enable_cyclic(McbInst* ptInst);
+int32_t
+McbEnableCyclic(McbInst* ptInst);
 /** Disable cyclic mode. */
-int32_t mcb_disable_cyclic(McbInst* ptInst);
+int32_t
+McbDisableCyclic(McbInst* ptInst);
 
 #endif

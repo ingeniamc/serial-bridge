@@ -247,7 +247,7 @@ void HspFunc(void const * argument)
     osEvent MsgOut;
     /** SPI initialization */
     McbInst dvrMaster;
-    mcb_init(&dvrMaster, MCB_OVER_SPI, MCB_MASTER, MCB_BLOCKING);
+    McbInit(&dvrMaster, MCB_OVER_SPI, MCB_MASTER, MCB_BLOCKING);
 
     /* Infinite loop */
     for (;;)
@@ -256,42 +256,42 @@ void HspFunc(void const * argument)
          * is requested.
          */
         MsgOut = osMessageGet(HspTxHandle, osWaitForever);
-        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_SET);
         if (MsgOut.status == osEventMessage)
         {
             McbMsg* pMcbMsg = (McbMsg*)MsgOut.value.p;
 
-            uint32_t u32NumTry = 0;
-            do
+            if (pMcbMsg->u16SubNode == MOCO_NODE)
             {
-                switch (pMcbMsg->cmd)
+                HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_SET);
+                uint32_t u32NumTry = 0;
+                do
                 {
-                    case HSP_REQ_READ:
-                        pMcbMsg->eStatus = mcbRead(&dvrMaster, pMcbMsg,
-                        DFLT_TIMEOUT);
-                        break;
-                    case HSP_REQ_WRITE:
-                    case HSP_REQ_CLOSE:
-                    case HSP_REQ_CPU_CHANGE:
-                        pMcbMsg->eStatus = mcbWrite(&dvrMaster, pMcbMsg,
-                        DFLT_TIMEOUT);
-                        break;
-                    default:
-                        /** Nothing */
-                        break;
-                }
+                    switch (pMcbMsg->u16Cmd)
+                    {
+                        case HSP_REQ_READ:
+                            pMcbMsg->eStatus = McbRead(&dvrMaster, pMcbMsg,
+                                                       DFLT_TIMEOUT);
+                            break;
+                        case HSP_REQ_WRITE:
+                            pMcbMsg->eStatus = McbWrite(&dvrMaster, pMcbMsg,
+                                                        DFLT_TIMEOUT);
+                            break;
+                        default:
+                            pMcbMsg->eStatus = MCB_MESSAGE_ERROR;
+                            break;
+                    }
 
-                if (pMcbMsg->eStatus != MCB_MESSAGE_SUCCESS)
-                {
-                    /* Error */
-                    osDelay(100);
-                }
+                    if (pMcbMsg->eStatus != MCB_MESSAGE_SUCCESS)
+                    {
+                        /* Error */
+                    }
 
-            }while ((pMcbMsg->eStatus != MCB_MESSAGE_SUCCESS)
-                    && ((u32NumTry++) < COMMS_NUM_TRY));
+                }while ((pMcbMsg->eStatus != MCB_MESSAGE_SUCCESS)
+                        && ((u32NumTry++) < COMMS_NUM_TRY));
 
-            osMessagePut(HspRxHandle, (uint32_t)pMcbMsg, osWaitForever);
-            HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_RESET);
+                osMessagePut(HspRxHandle, (uint32_t)pMcbMsg, osWaitForever);
+                HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_RESET);
+            }
         }
     }
     /* USER CODE END HspFunc */
@@ -316,47 +316,51 @@ void StartMcbSlaveTask(void const * argument)
     /* USER CODE BEGIN StartMcbSlaveTask */
     osEvent MsgOut;
     McbMsg mcbMsg;
+    McbMsg *pMcbMsg;
     McbInst dvrSlave;
-    mcb_init(&dvrSlave, MCB_OVER_SERIAL, MCB_SLAVE, MCB_BLOCKING);
+    McbInit(&dvrSlave, MCB_OVER_SERIAL, MCB_SLAVE, MCB_BLOCKING);
 
     HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_RESET);
     /* Infinite loop */
     for (;;)
     {
         /* Chek for incoming uart message*/
-        if (mcbRead(&dvrSlave, &mcbMsg, DFLT_TIMEOUT) == MCB_MESSAGE_SUCCESS)
+        pMcbMsg = &mcbMsg;
+        if (McbRead(&dvrSlave, pMcbMsg, DFLT_TIMEOUT) == MCB_MESSAGE_SUCCESS)
         {
-            osMessagePut(UartSlaveTxHandle, (uint32_t)&mcbMsg, osWaitForever);
-
-            MsgOut = osMessageGet(UartSlaveRxHandle, osWaitForever);
-            if (MsgOut.status == osEventMessage)
+            if (pMcbMsg->u16Node == NODE)
             {
-                McbMsg* pMcbSlaveMssg = (McbMsg*)MsgOut.value.p;
-                if (pMcbSlaveMssg->eStatus == MCB_MESSAGE_SUCCESS)
-                {
-                    uint32_t u32NumTry = 0;
-                    do
-                    {
-                        pMcbSlaveMssg->eStatus = mcbWrite(&dvrSlave,
-                                                          pMcbSlaveMssg,
-                                                          DFLT_TIMEOUT);
+                osMessagePut(UartSlaveTxHandle, (uint32_t)pMcbMsg,
+                             osWaitForever);
 
-                        if (pMcbSlaveMssg->eStatus != MCB_MESSAGE_SUCCESS)
-                        {
-                            /* Error */
-                            osDelay(100);
-                        }
-                    }while ((pMcbSlaveMssg->eStatus != MCB_MESSAGE_SUCCESS)
-                            && ((u32NumTry++) < COMMS_NUM_TRY));
-                }
-                else
+                MsgOut = osMessageGet(UartSlaveRxHandle, osWaitForever);
+                if (MsgOut.status == osEventMessage)
                 {
-                    /** Enable Orange led when driver comm fails */
-                    HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_SET);
+                    pMcbMsg = (McbMsg*)MsgOut.value.p;
+                    if (pMcbMsg->eStatus == MCB_MESSAGE_SUCCESS)
+                    {
+                        /** Do something */
+                    }
+                    else
+                    {
+                        /** Enable Orange led when driver comm fails */
+                        HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_SET);
+                    }
                 }
             }
+            uint32_t u32NumTry = 0;
+            do
+            {
+                pMcbMsg->eStatus = McbWrite(&dvrSlave, pMcbMsg, DFLT_TIMEOUT);
+
+                if (pMcbMsg->eStatus != MCB_MESSAGE_SUCCESS)
+                {
+                    /* Error */
+                    osDelay(100);
+                }
+            }while ((pMcbMsg->eStatus != MCB_MESSAGE_SUCCESS)
+                    && ((u32NumTry++) < COMMS_NUM_TRY));
         }
-        osDelay(1);
     }
     /* USER CODE END StartMcbSlaveTask */
 }
@@ -389,7 +393,6 @@ void StartBridgeTask(void const * argument)
                 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);
             }
         }
-        osDelay(1);
     }
     /* USER CODE END StartBridgeTask */
 }
