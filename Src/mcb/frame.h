@@ -47,10 +47,11 @@
 #define HSP_FRM_SEG             1U
 
 /** High speed Ingenia protocol frame */
-typedef struct {
-    uint16_t       buf[HSP_FRM_MAX_DATA_SZ];
-    uint16_t       sz;
-}TFrame;
+typedef struct
+{
+    uint16_t buf[HSP_FRM_MAX_DATA_SZ];
+    uint16_t sz;
+} TFrame;
 
 /**
  * Initialises an Ingenia High Speed Protocol frame.
@@ -72,8 +73,9 @@ typedef struct {
  * @return 0 success, error code otherwise
  */
 IER_RET
-frame_create(TFrame *tFrame, uint16_t u16Addr, uint8_t u8Cmd, uint8_t u8Pending,
-           	 const void *pStaBuf, const void *pDynBuf, size_t szDyn, bool calcCRC);
+frame_create(TFrame* tFrame, uint16_t u16Addr, uint8_t u8Cmd, uint8_t u8Pending,
+             const void *pStaBuf, const void *pDynBuf, size_t szDyn,
+             bool calcCRC);
 
 /**
  * Returns the address of the static data.
@@ -83,7 +85,7 @@ frame_create(TFrame *tFrame, uint16_t u16Addr, uint8_t u8Cmd, uint8_t u8Pending,
  * @return Address.
  */
 uint16_t
-frame_get_addr(const TFrame *frm);
+frame_get_addr(const TFrame* frm);
 
 /**
  * Returns the command (request or reply) of the static data.
@@ -93,7 +95,7 @@ frame_get_addr(const TFrame *frm);
  * @return Command.
  */
 uint8_t
-frame_get_cmd(const TFrame *frm);
+frame_get_cmd(const TFrame* frm);
 
 /**
  * Checks if the static data is segmented and requires further data.
@@ -103,7 +105,7 @@ frame_get_cmd(const TFrame *frm);
  * @return true if static data is segmented.
  */
 bool
-frame_get_segmented(const TFrame *frm);
+frame_get_segmented(const TFrame* frm);
 
 /**
  * Returns the static data of a frame.
@@ -113,7 +115,7 @@ frame_get_segmented(const TFrame *frm);
  * @return Static data
  */
 uint16_t
-frame_get_static_data(const TFrame *frm, uint16_t *buf);
+frame_get_static_data(const TFrame* frm, uint16_t* buf);
 
 /**
  * Indicates if the crc for the input frame is correct
@@ -125,6 +127,6 @@ frame_get_static_data(const TFrame *frm, uint16_t *buf);
  *         false if crc is wrong
  */
 bool
-frameCheckCRC(const TFrame *frm);
+frameCheckCRC(const TFrame* frm);
 
 #endif

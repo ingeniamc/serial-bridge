@@ -11,72 +11,72 @@
 /** Available interfaces */
 typedef enum
 {
-	/** MCB over SPI Interface */
-	MCB_OVER_SPI = 0,
-	/** MCB over UART Interface */
-	MCB_OVER_SERIAL
+    /** MCB over SPI Interface */
+    MCB_OVER_SPI = 0,
+    /** MCB over UART Interface */
+    MCB_OVER_SERIAL
 } EMcbIntf;
 
 /** Available interfaces */
 typedef enum
 {
-	/** MCB as master */
-	MCB_MASTER = 0,
-	/** MCB as slave */
-	MCB_SLAVE
+    /** MCB as master */
+    MCB_MASTER = 0,
+    /** MCB as slave */
+    MCB_SLAVE
 } EMcbMode;
 
 typedef enum
 {
-	/* Blocking mode, each request block until response */
-	MCB_BLOCKING = 0,
-	/* Non Blocking mode, if not ready, return state */
-	MCB_NON_BLOCKING
+    /* Blocking mode, each request block until response */
+    MCB_BLOCKING = 0,
+    /* Non Blocking mode, if not ready, return state */
+    MCB_NON_BLOCKING
 } EMcbRequestMode;
 
 typedef enum
 {
-	/* Message not ready */
-	MCB_MESSAGE_NOT_READY = 0,
-	/* Success request */
-	MCB_MESSAGE_SUCCESS,
-	/* Request error */
-	MCB_MESSAGE_ERROR
+    /* Message not ready */
+    MCB_MESSAGE_NOT_READY = 0,
+    /* Success request */
+    MCB_MESSAGE_SUCCESS,
+    /* Request error */
+    MCB_MESSAGE_ERROR
 } EMcbReqStatus;
 
 /** Motion control but instance */
 typedef struct
 {
-	/** Specific interface */
-	EMcbIntf eIntf;
-	/** Indicates if mcb is cyclic */
-	bool isCyclic;
-	/** Linked Hsp module */
-	HspInst Hsp;
-	/** Transmission mode */
-	EMcbMode eMode;
-	/** Request mode */
-	EMcbRequestMode eReqMode;
+    /** Specific interface */
+    EMcbIntf eIntf;
+    /** Indicates if mcb is cyclic */
+    bool isCyclic;
+    /** Linked Hsp module */
+    HspInst Hsp;
+    /** Transmission mode */
+    EMcbMode eMode;
+    /** Request mode */
+    EMcbRequestMode eReqMode;
 } McbInst;
 
 /** Frame data struct */
 typedef struct
 {
-	/* Address data */
-	uint16_t addr;
-	/* Command data */
-	uint16_t cmd;
-	/* Message total size (bytes) */
-	size_t size;
-	/* Static data */
-	uint16_t data[HSP_MAX_DATA_SZ];
-	/* Message status */
-	EMcbReqStatus eStatus;
+    /* Address data */
+    uint16_t addr;
+    /* Command data */
+    uint16_t cmd;
+    /* Message total size (bytes) */
+    size_t size;
+    /* Static data */
+    uint16_t data[HSP_MAX_DATA_SZ];
+    /* Message status */
+    EMcbReqStatus eStatus;
 } McbMsg;
 
 /** Initialization functions */
 void mcb_init(McbInst* ptInst, EMcbIntf eIntf, EMcbMode eMode,
-        EMcbRequestMode eReqMode);
+              EMcbRequestMode eReqMode);
 void mcb_deinit(McbInst* ptInst);
 
 /**
@@ -89,7 +89,7 @@ void mcb_deinit(McbInst* ptInst);
  * @param[in] u32Timeout
  *  Timeout duration
  */
-EMcbReqStatus mcbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout);
+EMcbReqStatus mcbWrite(McbInst* ptInst, McbMsg* mcbMsg, uint32_t u32Timeout);
 
 /**
  * Generic read function
@@ -101,7 +101,7 @@ EMcbReqStatus mcbWrite(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout);
  * @param[in] u32Timeout
  *  Timeout duration
  */
-EMcbReqStatus mcbRead(McbInst* ptInst, McbMsg *mcbMsg, uint32_t u32Timeout);
+EMcbReqStatus mcbRead(McbInst* ptInst, McbMsg* mcbMsg, uint32_t u32Timeout);
 
 /** Motion read/write functions */
 
