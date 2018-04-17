@@ -49,7 +49,6 @@
 #include "main.h"
 #include "stm32f4xx_hal.h"
 #include "cmsis_os.h"
-#include "adc.h"
 #include "crc.h"
 #include "dma.h"
 #include "i2c.h"
@@ -119,12 +118,16 @@ int main(void)
   MX_I2S3_Init();
   MX_SPI1_Init();
   MX_SPI2_Init();
-  MX_ADC1_Init();
   MX_TIM6_Init();
   MX_USART2_UART_Init();
   MX_CRC_Init();
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
+
+  /** Disable mem IC of the develop board */
+
+  HAL_TIM_Base_Start_IT(TIMER7_BASE_ADDR);
+  HAL_GPIO_WritePin(CS_I2C_SPI_GPIO_Port, CS_I2C_SPI_Pin, GPIO_PIN_SET);
 
   /* USER CODE END 2 */
 

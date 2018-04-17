@@ -66,6 +66,8 @@ extern TIM_HandleTypeDef htim7;
 
 /* USER CODE BEGIN Private defines */
 
+#define TIMER7_BASE_ADDR &htim7
+
 /* USER CODE END Private defines */
 
 extern void _Error_Handler(char *, int);
@@ -74,6 +76,22 @@ void MX_TIM6_Init(void);
 void MX_TIM7_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+
+/**
+ * @brief  TIM DMA Period Elapse complete callback.
+ * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
+ *                the configuration information for the specified DMA module.
+ * @retval None
+ */
+void
+HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+
+/**
+ * @brief  Timer 7 period elapsed callback
+ * @retval None
+ */
+void
+TIM7_PeriodElapsedCallback(void);
 
 /* USER CODE END Prototypes */
 
