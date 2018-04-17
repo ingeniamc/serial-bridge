@@ -50,20 +50,21 @@
 typedef enum
 {
     /** Uart frame (Node Hdr + Hdr + data + crc) */
-	UART_FRAME = 0,
-	/** Frame (Hdr + data + crc) */
-	FRAME
-}TFrameType;
+    UART_FRAME = 0,
+    /** Frame (Hdr + data + crc) */
+    FRAME
+} TFrameType;
 
 /** High speed Ingenia protocol frame */
-typedef struct {
+typedef struct
+{
     /** Type of frame */
-	TFrameType 	tFrameType;
-	/** Data buffer */
-    uint16_t    buf[HSP_FRM_MAX_DATA_SZ];
+    TFrameType tFrameType;
+    /** Data buffer */
+    uint16_t buf[HSP_FRM_MAX_DATA_SZ];
     /** Frame size */
-    uint16_t    sz;
-}TFrame;
+    uint16_t sz;
+} TFrame;
 
 /**
  * Initialises an Ingenia High Speed Protocol frame.

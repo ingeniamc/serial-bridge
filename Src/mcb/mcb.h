@@ -78,9 +78,27 @@ typedef struct
     EMcbReqStatus eStatus;
 } McbMsg;
 
-/** Initialization functions */
+/**
+ * Initialization function
+ *
+ * @param[in] ptInst
+ *  Specifies the target instance
+ * @param[in] eIntf
+ *  Specifies the target communication instance (UART, SPI)
+ * @param[in] eMode
+ *  Specifies the communication mode (Master, Slave)
+ * @param[in] eReqMode
+ *  Specifies the request mode (blocking, non blocking)
+ */
 void McbInit(McbInst* ptInst, EMcbIntf eIntf, EMcbMode eMode,
-              EMcbRequestMode eReqMode);
+             EMcbRequestMode eReqMode);
+
+/**
+ * DeiIitialization function
+ *
+ * @param[in] ptInst
+ *  Specifies the target instance
+ */
 void McbDeinit(McbInst* ptInst);
 
 /**
