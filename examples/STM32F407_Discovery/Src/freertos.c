@@ -55,9 +55,9 @@
 #include <stdbool.h>
 #include "spi.h"
 #include "usart.h"
-#include "mcb/mcb.h"
+#include "mcb.h"
+#include "ipb.h"
 #include "usbd_cdc_if.h"
-#include "mcb/frame.h"
 
 /* USER CODE END Includes */
 
@@ -237,7 +237,7 @@ void HspFunc(void const * argument)
     osEvent MsgOut;
     /** SPI initialization */
     McbInst dvrMaster;
-    McbInit(&dvrMaster, MCB_OVER_SPI, MCB_MASTER, MCB_BLOCKING);
+    McbInit(&dvrMaster, MCB_BLOCKING);
 
     /* Infinite loop */
     for (;;)
@@ -247,7 +247,7 @@ void HspFunc(void const * argument)
         {
             McbMsg* pMcbMsg = (McbMsg*)MsgOut.value.p;
 
-            if (pMcbMsg->u16SubNode == MOCO_NODE)
+            if (pMcbMsg->u16Node == MOCO_NODE)
             {
                 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_SET);
                 uint32_t u32NumTry = 0;
@@ -255,11 +255,11 @@ void HspFunc(void const * argument)
                 {
                     switch (pMcbMsg->u16Cmd)
                     {
-                        case HSP_REQ_READ:
+                        case MCB_REQ_READ:
                             pMcbMsg->eStatus = McbRead(&dvrMaster, pMcbMsg,
                                                        DFLT_TIMEOUT);
                             break;
-                        case HSP_REQ_WRITE:
+                        case MCB_REQ_WRITE:
                             pMcbMsg->eStatus = McbWrite(&dvrMaster, pMcbMsg,
                                                         DFLT_TIMEOUT);
                             break;
@@ -303,9 +303,10 @@ void StartMcbSlaveTask(void const * argument)
   /* USER CODE BEGIN StartMcbSlaveTask */
     osEvent MsgOut;
     McbMsg mcbMsg;
-    McbMsg *pMcbMsg;
-    McbInst dvrSlave;
-    McbInit(&dvrSlave, MCB_OVER_SERIAL, MCB_SLAVE, MCB_BLOCKING);
+    IpbMsg *pMcbMsg;
+    IpbInst dvrSlave;
+
+    IpbInit(&dvrSlave, UART_BASED, IPB_BLOCKING);
 
     HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_RESET);
     /* Infinite loop */
@@ -313,7 +314,7 @@ void StartMcbSlaveTask(void const * argument)
     {
         /* Chek for incoming uart message*/
         pMcbMsg = &mcbMsg;
-        if (McbRead(&dvrSlave, pMcbMsg, DFLT_TIMEOUT) == MCB_MESSAGE_SUCCESS)
+        if (IpbRead(&dvrSlave, pMcbMsg, DFLT_TIMEOUT) == MCB_MESSAGE_SUCCESS)
         {
             if (pMcbMsg->u16Node == NODE)
             {
@@ -323,7 +324,7 @@ void StartMcbSlaveTask(void const * argument)
                 MsgOut = osMessageGet(UartSlaveRxHandle, osWaitForever);
                 if (MsgOut.status == osEventMessage)
                 {
-                    pMcbMsg = (McbMsg*)MsgOut.value.p;
+                    pMcbMsg = (IpbMsg*) MsgOut.value.p;
                     if (pMcbMsg->eStatus == MCB_MESSAGE_SUCCESS)
                     {
                         /** Do something */

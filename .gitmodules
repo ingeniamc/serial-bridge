@@ -1,0 +1,6 @@
+[submodule "moco-lib"]
+	path = moco-lib
+	url = git@bitbucket.org:ingeniamc/moco-lib.git
+[submodule "coco-lib"]
+	path = coco-lib
+	url = git@bitbucket.org:ingeniamc/coco-lib.git

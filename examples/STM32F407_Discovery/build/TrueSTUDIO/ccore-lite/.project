@@ -97,6 +97,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>Application/ipb</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>Application/mcb</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -207,24 +212,39 @@
 			<locationURI>PARENT-3-PROJECT_LOC/Src/usbd_desc.c</locationURI>
 		</link>
 		<link>
-			<name>Application/mcb/crcccitt.c</name>
+			<name>Application/ipb/ipb.c</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/Src/mcb/crcccitt.c</locationURI>
+			<locationURI>PARENT-5-PROJECT_LOC/coco-lib/ipb.c</locationURI>
 		</link>
 		<link>
-			<name>Application/mcb/frame.c</name>
+			<name>Application/ipb/ipb_crcccitt.c</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/Src/mcb/frame.c</locationURI>
+			<locationURI>PARENT-5-PROJECT_LOC/coco-lib/ipb_crcccitt.c</locationURI>
 		</link>
 		<link>
-			<name>Application/mcb/hsp.c</name>
+			<name>Application/ipb/ipb_frame.c</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/Src/mcb/hsp.c</locationURI>
+			<locationURI>PARENT-5-PROJECT_LOC/coco-lib/ipb_frame.c</locationURI>
+		</link>
+		<link>
+			<name>Application/ipb/ipb_intf.c</name>
+			<type>1</type>
+			<locationURI>PARENT-5-PROJECT_LOC/coco-lib/ipb_intf.c</locationURI>
 		</link>
 		<link>
 			<name>Application/mcb/mcb.c</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/Src/mcb/mcb.c</locationURI>
+			<locationURI>PARENT-5-PROJECT_LOC/moco-lib/mcb.c</locationURI>
+		</link>
+		<link>
+			<name>Application/mcb/mcb_frame.c</name>
+			<type>1</type>
+			<locationURI>PARENT-5-PROJECT_LOC/moco-lib/mcb_frame.c</locationURI>
+		</link>
+		<link>
+			<name>Application/mcb/mcb_intf.c</name>
+			<type>1</type>
+			<locationURI>PARENT-5-PROJECT_LOC/moco-lib/mcb_intf.c</locationURI>
 		</link>
 		<link>
 			<name>Drivers/CMSIS/system_stm32f4xx.c</name>
