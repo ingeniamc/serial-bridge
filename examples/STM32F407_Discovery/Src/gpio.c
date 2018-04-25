@@ -50,14 +50,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "gpio.h"
 /* USER CODE BEGIN 0 */
-
+#include "mcb_usr.h"
 /* USER CODE END 0 */
 
 /*----------------------------------------------------------------------------*/
 /* Configure GPIO                                                             */
 /*----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
-
+void (*HAL_EXTI_Event)(void*) = NULL;
+void* pEvntCtx = NULL;
 /* USER CODE END 1 */
 
 /** Configure pins as 
@@ -214,7 +215,41 @@ void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 2 */
+void AttachExtiEvent(void (*Event)(void*), void* pArg)
+{
+    HAL_EXTI_Event = Event;
+    pEvntCtx = pArg;
+}
 
+Mcb_EPinVal Mcb_IntfIRQRead(uint16_t u16Id)
+{
+    GPIO_PinState PinVal = GPIO_PIN_RESET;
+
+    switch (u16Id)
+    {
+        case 0:
+            PinVal = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_4);
+            break;
+        default:
+            /** Nothing */
+            break;
+    }
+
+    return (Mcb_EPinVal) PinVal;
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    switch (GPIO_Pin)
+    {
+        default:
+            if (HAL_EXTI_Event != NULL)
+            {
+                HAL_EXTI_Event(pEvntCtx);
+            }
+            break;
+    }
+}
 /* USER CODE END 2 */
 
 /**

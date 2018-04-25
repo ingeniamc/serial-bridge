@@ -74,7 +74,6 @@ void MX_SPI1_Init(void);
 void MX_SPI2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-bool MX_SPI1_CheckCrc(SPI_HandleTypeDef* spiHandle);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

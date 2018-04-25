@@ -54,7 +54,7 @@
 #include "dma.h"
 
 /* USER CODE BEGIN 0 */
-
+#include "ipb_usr.h"
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart2;
@@ -180,6 +180,46 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 } 
 
 /* USER CODE BEGIN 1 */
+uint16_t Ipb_IntfUartReception(uint16_t u16Id, uint8_t *pu8Buf, uint16_t u16Size)
+{
+    uint16_t u16ReadBytes = 0;
+
+    switch (u16Id)
+    {
+        case 0:
+            if (HAL_UART_Receive_DMA(&huart2, pu8Buf, u16Size) == HAL_OK)
+            {
+                u16ReadBytes = u16Size;
+            }
+            break;
+        default:
+            /* Nothing */
+            break;
+    }
+
+    return u16ReadBytes;
+}
+
+uint16_t Ipb_IntfUartTransmission(uint16_t u16Id, const uint8_t *pu8Buf, uint16_t u16Size)
+{
+    uint16_t u16WrittenBytes = 0;
+
+    switch (u16Id)
+    {
+        case 0:
+            if (HAL_UART_Transmit_DMA(&huart2, (uint8_t*) pu8Buf, u16Size) == HAL_OK)
+            {
+                u16WrittenBytes = u16Size;
+            }
+            break;
+        default:
+            /* Nothing */
+            break;
+    }
+
+    return u16WrittenBytes;
+}
+
 
 /* USER CODE END 1 */
 

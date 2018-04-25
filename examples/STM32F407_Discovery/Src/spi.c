@@ -54,7 +54,7 @@
 #include "dma.h"
 
 /* USER CODE BEGIN 0 */
-
+#include "mcb_usr.h"
 /* USER CODE END 0 */
 
 SPI_HandleTypeDef hspi1;
@@ -270,19 +270,6 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
 } 
 
 /* USER CODE BEGIN 1 */
-bool MX_SPI1_CheckCrc(SPI_HandleTypeDef* spiHandle)
-{
-	bool ret = true;
-	uint32_t u32Error = HAL_SPI_GetError(spiHandle);
-
-	if (u32Error == HAL_SPI_ERROR_CRC)
-	{
-		ret = false;
-	}
-
-	return ret;
-}
-
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
 	if (hspi->Instance==SPI1)
@@ -297,6 +284,63 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
 	}
+}
+
+bool Mcb_IntfIsReady(uint16_t u16Id)
+{
+    bool IsReady = false;
+
+    switch (u16Id)
+    {
+        case 0:
+            if (HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_READY)
+            {
+                IsReady = true;
+            }
+            break;
+        default:
+            /* Nothing */
+            break;
+    }
+
+    return IsReady;
+}
+
+bool Mcb_IntfCheckCrc(uint16_t u16Id)
+{
+    bool bSuccess = false;
+    uint32_t u32Error;
+
+    switch (u16Id)
+    {
+        case 0:
+            u32Error = HAL_SPI_GetError(&hspi1);
+
+            if (u32Error == HAL_SPI_ERROR_CRC)
+            {
+                bSuccess = false;
+            }
+            break;
+        default:
+            /* Nothing */
+            break;
+    }
+
+    return bSuccess;
+}
+
+void Mcb_IntfSPITransfer(uint16_t u16Id, uint16_t* pu16In, uint16_t* pu16Out, uint16_t u16Sz)
+{
+    switch (u16Id)
+    {
+        case 0:
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
+            HAL_SPI_TransmitReceive_DMA(&hspi1, (uint8_t*) pu16In, (uint8_t*) pu16Out, u16Sz);
+            break;
+        default:
+            /* Nothing */
+            break;
+    }
 }
 /* USER CODE END 1 */
 

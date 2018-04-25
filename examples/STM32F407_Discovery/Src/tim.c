@@ -177,6 +177,16 @@ __weak void TIM7_PeriodElapsedCallback(void)
 {
     /* Empty */
 }
+
+uint32_t Mcb_GetMillis(void)
+{
+    return HAL_GetTick();
+}
+
+uint32_t Ipb_GetMillis(void)
+{
+    return HAL_GetTick();
+}
 /* USER CODE END 1 */
 
 /**
