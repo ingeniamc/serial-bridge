@@ -241,7 +241,7 @@ void McbFunc(void const * argument)
     Mcb_TInst dvrMaster;
 
     Mcb_Init(&dvrMaster, MCB_BLOCKING, 0, DFLT_TIMEOUT);
-    AttachExtiEvent(IrqEvent, &dvrMaster);
+    AttachExtiEvent(IrqEvent, &dvrMaster.tIntf);
 
     /* Infinite loop */
     for (;;)
