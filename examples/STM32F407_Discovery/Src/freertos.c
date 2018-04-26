@@ -67,7 +67,7 @@ osThreadId defaultTaskHandle;
 uint32_t defaultTaskBuffer[ 128 ];
 osStaticThreadDef_t defaultTaskControlBlock;
 osThreadId McbTaskHandle;
-uint32_t McbBuffer[ 256 ];
+uint32_t McbBuffer[ 1024 ];
 osStaticThreadDef_t McbControlBlock;
 osThreadId UserTaskHandle;
 uint32_t UserTaskBuffer[ 1024 ];
@@ -79,10 +79,10 @@ osThreadId BridgeTaskHandle;
 uint32_t BridgeTaskBuffer[ 1024 ];
 osStaticThreadDef_t BridgeTaskControlBlock;
 osMessageQId McbTxHandle;
-uint8_t McbTxBuffer[16 * sizeof(Mcb_TMsg*)];
+uint8_t McbTxBuffer[ 16 * sizeof( Mcb_TMsg* ) ];
 osStaticMessageQDef_t McbTxControlBlock;
 osMessageQId McbRxHandle;
-uint8_t McbRxBuffer[16 * sizeof(Mcb_TMsg*)];
+uint8_t McbRxBuffer[ 16 * sizeof( Mcb_TMsg* ) ];
 osStaticMessageQDef_t McbRxControlBlock;
 osMessageQId IpbTxHandle;
 uint8_t IpbTxBuffer[ 16 * sizeof( IpbMsg* ) ];
@@ -176,7 +176,7 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of McbTask */
-  osThreadStaticDef(McbTask, McbFunc, osPriorityLow, 0, 256, McbBuffer, &McbControlBlock);
+  osThreadStaticDef(McbTask, McbFunc, osPriorityLow, 0, 1024, McbBuffer, &McbControlBlock);
   McbTaskHandle = osThreadCreate(osThread(McbTask), NULL);
 
   /* definition and creation of UserTask */
@@ -197,11 +197,11 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* definition and creation of McbTx */
-    osMessageQStaticDef(McbTx, 16, Mcb_TMsg*, McbTxBuffer, &McbTxControlBlock);
+  osMessageQStaticDef(McbTx, 16, Mcb_TMsg*, McbTxBuffer, &McbTxControlBlock);
   McbTxHandle = osMessageCreate(osMessageQ(McbTx), NULL);
 
   /* definition and creation of McbRx */
-    osMessageQStaticDef(McbRx, 16, Mcb_TMsg*, McbRxBuffer, &McbRxControlBlock);
+  osMessageQStaticDef(McbRx, 16, Mcb_TMsg*, McbRxBuffer, &McbRxControlBlock);
   McbRxHandle = osMessageCreate(osMessageQ(McbRx), NULL);
 
   /* definition and creation of IpbTx */
@@ -235,7 +235,7 @@ void StartDefaultTask(void const * argument)
 /* McbFunc function */
 void McbFunc(void const * argument)
 {
-    /* USER CODE BEGIN McbFunc */
+  /* USER CODE BEGIN McbFunc */
     osEvent MsgOut;
     /** SPI initialization */
     Mcb_TInst dvrMaster;
@@ -279,7 +279,7 @@ void McbFunc(void const * argument)
             HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_RESET);
         }
     }
-    /* USER CODE END McbFunc */
+  /* USER CODE END McbFunc */
 }
 
 /* StartUserTask function */
@@ -298,7 +298,7 @@ void StartUserTask(void const * argument)
 /* IpbSlaveTask function */
 void IpbSlaveTask(void const * argument)
 {
-    /* USER CODE BEGIN IpbSlaveTask */
+  /* USER CODE BEGIN IpbSlaveTask */
     osEvent MsgOut;
     IpbMsg ipbMsg;
     IpbMsg *pIpbMsg;
@@ -349,7 +349,7 @@ void IpbSlaveTask(void const * argument)
                     && ((u32NumTry++) < COMMS_NUM_TRY));
         }
     }
-    /* USER CODE END IpbSlaveTask */
+  /* USER CODE END IpbSlaveTask */
 }
 
 /* StartBridgeTask function */
@@ -375,8 +375,12 @@ void StartBridgeTask(void const * argument)
             msg.u16Addr = pIpbMsg->u16Addr;
             msg.u16Cmd = pIpbMsg->u16Cmd;
             msg.u16Size = pIpbMsg->u16Size;
+            if (pIpbMsg->eStatus == IPB_MESSAGE_SUCCESS)
+            {
+            	msg.eStatus = MCB_SUCCESS;
+            }
 
-            memcpy(msg.u16Data, pIpbMsg->u16Data, msg.u16Size);
+            memcpy(msg.u16Data, pIpbMsg->u16Data, msg.u16Size* 2);
 
             osMessagePut(McbTxHandle, (uint32_t) &msg, osWaitForever);
 
