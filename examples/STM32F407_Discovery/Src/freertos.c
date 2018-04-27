@@ -380,7 +380,7 @@ void StartBridgeTask(void const * argument)
             	msg.eStatus = MCB_SUCCESS;
             }
 
-            memcpy(msg.u16Data, pIpbMsg->u16Data, msg.u16Size* 2);
+            memcpy(msg.u16Data, pIpbMsg->u16Data, msg.u16Size * sizeof(uint16_t));
 
             osMessagePut(McbTxHandle, (uint32_t) &msg, osWaitForever);
 
@@ -395,10 +395,20 @@ void StartBridgeTask(void const * argument)
                 msg2.u16Node = 1;
                 msg2.u16SubNode = pMcbMasterMsg->u16Node;
                 msg2.u16Addr = pMcbMasterMsg->u16Addr;
-                msg2.u16Cmd = pMcbMasterMsg->u16Cmd;
+
                 msg2.u16Size = pMcbMasterMsg->u16Size;
 
-                memcpy(msg2.u16Data, pMcbMasterMsg->u16Data, msg.u16Size);
+                if (pMcbMasterMsg->eStatus == MCB_SUCCESS)
+                {
+                    msg2.u16Cmd = 3;
+                    msg2.eStatus = IPB_MESSAGE_SUCCESS;
+                }
+                else
+                {
+                    msg2.u16Cmd = 4;
+                }
+
+                memcpy(msg2.u16Data, pMcbMasterMsg->u16Data, msg.u16Size * sizeof(uint16_t));
 
                 osMessagePut(IpbRxHandle, (uint32_t) &msg2, osWaitForever);
                 HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);

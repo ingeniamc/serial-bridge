@@ -308,7 +308,7 @@ bool Mcb_IntfIsReady(uint16_t u16Id)
 
 bool Mcb_IntfCheckCrc(uint16_t u16Id)
 {
-    bool bSuccess = false;
+    bool bSuccess = true;
     uint32_t u32Error;
 
     switch (u16Id)
