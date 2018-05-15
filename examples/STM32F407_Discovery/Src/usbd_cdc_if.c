@@ -51,6 +51,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
+#include "ipb_usr.h"
 
 /* USER CODE END INCLUDE */
 
@@ -127,7 +128,7 @@ uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
-
+uint16_t u16RxPtr;
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
@@ -186,6 +187,7 @@ static int8_t CDC_Init_FS(void)
   /* Set Application Buffers */
   USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
+  u16RxPtr = 0;
   return (USBD_OK);
   /* USER CODE END 3 */
 }
@@ -291,6 +293,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
+  u16RxPtr += *Len;
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
   return (USBD_OK);
@@ -323,7 +326,45 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
+uint16_t
+Ipb_IntfUsbReception(uint16_t u16Id, uint8_t *pu8Buf, uint16_t u16Size)
+{
+    uint16_t u16Read = 0;
 
+    switch(u16Id)
+    {
+        case 0:
+            if (u16RxPtr >= u16Size)
+            {
+                u16Read = u16Size;
+                memcpy(pu8Buf, UserRxBufferFS, u16Size);
+                u16RxPtr -= u16Size;
+            }
+            break;
+        default:
+            break;
+    }
+
+    return u16Read;
+}
+
+uint16_t
+Ipb_IntfUsbTransmission(uint16_t u16Id, const uint8_t *pu8Buf, uint16_t u16Size)
+{
+    uint16_t u16Write = 0;
+
+    switch(u16Id)
+    {
+        case 0:
+            CDC_Transmit_FS((uint8_t*)pu8Buf, u16Size);
+            u16Write = u16Size;
+            break;
+        default:
+            break;
+    }
+
+    return u16Write;
+}
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
 
 /**
