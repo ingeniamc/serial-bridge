@@ -306,7 +306,7 @@ bool Mcb_IntfIsReady(uint16_t u16Id)
     return IsReady;
 }
 
-bool Mcb_IntfCheckCrc(uint16_t u16Id)
+bool Mcb_IntfCheckCrc(uint16_t u16Id, const uint16_t* pu16Buf, uint16_t u16Sz)
 {
     bool bSuccess = true;
     uint32_t u32Error;

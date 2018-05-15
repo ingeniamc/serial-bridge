@@ -241,16 +241,14 @@ void McbFunc(void const * argument)
     /** SPI initialization */
     Mcb_TInst dvrMaster;
 
-    Mcb_Init(&dvrMaster, MCB_BLOCKING, 0, MCB_DFLT_TIMEOUT);
+    Mcb_Init(&dvrMaster, MCB_BLOCKING, 0, false, MCB_DFLT_TIMEOUT);
     AttachExtiEvent(IrqEvent, &dvrMaster.tIntf);
 
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, GPIO_PIN_RESET);
     /* Infinite loop */
     for (;;)
     {
         MsgOut = osMessageGet(McbTxHandle, osWaitForever);
-        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, GPIO_PIN_SET);
+
         if (MsgOut.status == osEventMessage)
         {
             pMcbMsg = (Mcb_TMsg*) MsgOut.value.p;
@@ -273,9 +271,7 @@ void McbFunc(void const * argument)
                 /* Error */
 
             }
-
             osMessagePut(McbRxHandle, (uint32_t) pMcbMsg, osWaitForever);
-            HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, GPIO_PIN_RESET);
         }
     }
   /* USER CODE END McbFunc */
@@ -303,27 +299,21 @@ void IpbSlaveTask(void const * argument)
     Ipb_TMsg* pAnswer;
     Ipb_TInst dvrSlave;
 
-    Ipb_Init(&dvrSlave, UART_BASED, IPB_BLOCKING);
+    Ipb_Init(&dvrSlave, USB_BASED, IPB_BLOCKING);
 
-    HAL_GPIO_WritePin(GPIOD, LD4_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);
     /* Infinite loop */
     for (;;)
     {
         /* Chek for incoming uart message*/
         if (Ipb_Read(&dvrSlave, &ipbMsg, IPB_DFLT_TIMEOUT) == IPB_SUCCESS)
         {
-            HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_SET);
             if (ipbMsg.u16Node == NODE)
             {
-                HAL_GPIO_WritePin(GPIOD, LD3_Pin, GPIO_PIN_RESET);
                 osMessagePut(IpbTxHandle, (uint32_t) &ipbMsg,
                              osWaitForever);
 
                 MsgOut = osMessageGet(IpbRxHandle, osWaitForever);
-                HAL_GPIO_WritePin(GPIOD, LD4_Pin, GPIO_PIN_SET);
+
                 if (MsgOut.status == osEventMessage)
                 {
                     pAnswer = (Ipb_TMsg*) MsgOut.value.p;
@@ -356,10 +346,7 @@ void IpbSlaveTask(void const * argument)
 
                 pAnswer = &ipbMsg;
             }
-
             Ipb_Write(&dvrSlave, pAnswer, IPB_DFLT_TIMEOUT);
-            HAL_GPIO_WritePin(GPIOD, LD4_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);
         }
     }
   /* USER CODE END IpbSlaveTask */
@@ -374,14 +361,11 @@ void StartBridgeTask(void const * argument)
     osEvent MsgSlaveOut, MsgMasterOut;
     Mcb_TMsg* pMcbMasterMsg;
 
-    HAL_GPIO_WritePin(GPIOD, LD6_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOD, LD5_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9, GPIO_PIN_RESET);
     /* Infinite loop */
     for (;;)
     {
         MsgSlaveOut = osMessageGet(IpbTxHandle, osWaitForever);
-        HAL_GPIO_WritePin(GPIOD, LD6_Pin, GPIO_PIN_SET);
+
         if (MsgSlaveOut.status == osEventMessage)
         {
             Ipb_TMsg* pIpbMsg = (Ipb_TMsg*) MsgSlaveOut.value.p;
@@ -396,10 +380,8 @@ void StartBridgeTask(void const * argument)
 
                 memcpy(msg.u16Data, pIpbMsg->u16Data, msg.u16Size * sizeof(uint16_t));
 
-                HAL_GPIO_WritePin(GPIOD, LD6_Pin, GPIO_PIN_RESET);
                 osMessagePut(McbTxHandle, (uint32_t) &msg, osWaitForever);
                 MsgMasterOut = osMessageGet(McbRxHandle, osWaitForever);
-                HAL_GPIO_WritePin(GPIOD, LD5_Pin, GPIO_PIN_SET);
 
                 if (MsgMasterOut.status == osEventMessage)
                 {
@@ -448,7 +430,6 @@ void StartBridgeTask(void const * argument)
                 msg2.eStatus = IPB_SUCCESS;
                 memset(msg2.u16Data, 0, msg2.u16Size * sizeof(uint16_t));
             }
-            HAL_GPIO_WritePin(GPIOD, LD5_Pin, GPIO_PIN_RESET);
             osMessagePut(IpbRxHandle, (uint32_t) &msg2, osWaitForever);
         }
     }
