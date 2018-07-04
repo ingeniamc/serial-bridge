@@ -152,9 +152,10 @@ int main(void)
                     break;
             }
 
+            ipbMsg.u16Cmd = mcbMsg.u16Cmd;
+
             if (mcbMsg.eStatus == MCB_SUCCESS)
             {
-                ipbMsg.u16Cmd = mcbMsg.u16Cmd;
                 ipbMsg.u16Size = mcbMsg.u16Size;
                 ipbMsg.eStatus = mcbMsg.eStatus;
 
@@ -162,7 +163,6 @@ int main(void)
             }
             else
             {
-                ipbMsg.u16Cmd = 4;
                 ipbMsg.u16Size = 4;
                 ipbMsg.eStatus = IPB_ERROR;
             }
@@ -338,6 +338,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
+
 
 }
 
