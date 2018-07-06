@@ -364,6 +364,19 @@ Ipb_IntfUsbTransmission(uint16_t u16Id, const uint8_t *pu8Buf, uint16_t u16Size)
 
     return u16Write;
 }
+
+void
+Ipb_IntfUsbDiscardData(uint16_t u16Id)
+{
+    switch(u16Id)
+    {
+        case 0:
+            u16RxPtr = 0;
+            break;
+        default:
+            break;
+    }
+}
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
 
 /**

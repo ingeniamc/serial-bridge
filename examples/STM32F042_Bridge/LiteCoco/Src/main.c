@@ -133,11 +133,12 @@ int main(void)
     {
         if (ipbMsg.u16Node == 10)
         {
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
             mcbMsg.u16Node = ipbMsg.u16SubNode;
             mcbMsg.u16Addr = ipbMsg.u16Addr;
             mcbMsg.u16Cmd = ipbMsg.u16Cmd;
             mcbMsg.u16Size = ipbMsg.u16Size;
-            memcpy(mcbMsg.u16Data, ipbMsg.u16Data, mcbMsg.u16Size);
+            memcpy(mcbMsg.u16Data, ipbMsg.u16Data, mcbMsg.u16Size * sizeof(uint16_t));
 
             switch (mcbMsg.u16Cmd)
             {
@@ -152,14 +153,17 @@ int main(void)
                     break;
             }
 
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+
             ipbMsg.u16Cmd = mcbMsg.u16Cmd;
 
             if (mcbMsg.eStatus == MCB_SUCCESS)
             {
+                HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
                 ipbMsg.u16Size = mcbMsg.u16Size;
-                ipbMsg.eStatus = mcbMsg.eStatus;
+                ipbMsg.eStatus = IPB_SUCCESS;
 
-                memcpy(ipbMsg.u16Data, mcbMsg.u16Data, ipbMsg.u16Size);
+                memcpy(ipbMsg.u16Data, mcbMsg.u16Data, ipbMsg.u16Size * sizeof(uint16_t));
             }
             else
             {
@@ -168,6 +172,7 @@ int main(void)
             }
 
             Ipb_Write(&dvrSlave, &ipbMsg, IPB_DFLT_TIMEOUT);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
         }
       }
   /* USER CODE END WHILE */
@@ -325,6 +330,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
 
   /*Configure GPIO pin : PA4 */
   GPIO_InitStruct.Pin = GPIO_PIN_4;
