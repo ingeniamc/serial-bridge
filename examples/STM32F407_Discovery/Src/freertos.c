@@ -241,7 +241,7 @@ void McbFunc(void const * argument)
     /** SPI initialization */
     Mcb_TInst dvrMaster;
 
-    Mcb_Init(&dvrMaster, MCB_BLOCKING, 0, MCB_DFLT_TIMEOUT);
+    Mcb_Init(&dvrMaster, MCB_BLOCKING, 0, false, MCB_DFLT_TIMEOUT);
     AttachExtiEvent(IrqEvent, &dvrMaster.tIntf);
 
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, GPIO_PIN_RESET);
