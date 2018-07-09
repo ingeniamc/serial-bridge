@@ -155,12 +155,11 @@ int main(void)
 
             HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
 
-            ipbMsg.u16Cmd = mcbMsg.u16Cmd;
-
             if (mcbMsg.eStatus == MCB_SUCCESS)
             {
                 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
                 ipbMsg.u16Size = mcbMsg.u16Size;
+                ipbMsg.u16Cmd = IPB_REP_ACK;
                 ipbMsg.eStatus = IPB_SUCCESS;
 
                 memcpy(ipbMsg.u16Data, mcbMsg.u16Data, ipbMsg.u16Size * sizeof(uint16_t));
@@ -168,6 +167,7 @@ int main(void)
             else
             {
                 ipbMsg.u16Size = 4;
+                ipbMsg.u16Cmd |= IPB_REP_ERROR;
                 ipbMsg.eStatus = IPB_ERROR;
             }
 
