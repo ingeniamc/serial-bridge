@@ -1,0 +1,20 @@
+--- UART_v1.c	2018-07-25 09:11:17.203914306 +0200
++++ UART_v1.c.bak	2018-03-24 02:43:01.000000000 +0100
+@@ -2175,7 +2175,8 @@
+ 
+     while (retVal == TRUE)
+     {
+-        if (UARTCharsAvail(hwAttrs->baseAddr) == 0)
++        rdData = UARTCharGetNonBlocking(hwAttrs->baseAddr);
++        if (rdData == (-((int8_t)1)))
+         {
+             if (timeoutCnt == 0)
+             {
+@@ -2189,7 +2190,6 @@
+         }
+         else
+         {
+-            rdData = UARTCharGetNonBlocking(hwAttrs->baseAddr);
+             *data = (uint8_t)rdData;
+             break;
+         }
