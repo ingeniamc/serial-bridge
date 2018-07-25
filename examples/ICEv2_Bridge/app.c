@@ -113,8 +113,8 @@ void TasksCreate(void)
                7, 8192);
 
     /* Create bridge task, to connect tasks */
-//    TaskCreate(CocoTask, "CocoTask",
-//               8, 4096);
+    TaskCreate(CocoTask, "CocoTask",
+               8, 4096);
 
     /* Create task to test spi interface */
 //       TaskCreate(i2c_eeprom_read_and_display_task,
