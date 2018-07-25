@@ -1,9 +1,18 @@
 # COCO Bridge
 
+## Overview ##
+This repository contains different examples of bridge implementation using the mcb library. The examples are based on different platforms including low MCU performance without OS and high MPU performance such as the sitara family available on development board like beaglebone.
+
+All the examples implements a bridge between a serial communication based on UART or USB (CDC) protocols and the extended SPI used for motion control bus.
+
 ## ST ##
 
 ### Highlights ###
+* Developed for STM32 devices (STM32F042 & STM32F407)
+* Developed with [Atollic TrueStudio](https://atollic.com/truestudio/)
+* Compiled using ANSI/ISO C89
 
+### STM32CubeMx HAL code generator ###
 The HAL source code is generated with "SM32CubeMX" software, there are a few issues with that code generation tool:
 * DMA UART operations do not recover the interface state
 * Configuration of NSS (Chip Select) signal of SPI
@@ -17,7 +26,7 @@ When the "STM32CubeMX" generate the code, the listed files have to be recovered.
 ## Sitara ##
 ### Highlights ###
 
-* Develop for AM335x devices
+* Developed for AM335x devices
 * Developed with [Code Compose Studio](http://www.ti.com/tool/ccstudio-C2000) and the GNU compiler from TI
 * Compiled using ANSI/ISO C89 & ISO C++03 language
 
