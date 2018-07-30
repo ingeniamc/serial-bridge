@@ -41,21 +41,17 @@ The next packages must be installed in order to build the repository correctly:
 - EDMA 2.12.05
 
 ### Patch the SDK
-Patch the files UART_v1, and UART_drv to correct the drivers issues:
+The TI SDK contains a Uart driver configured to work as text mode, the driver needs some modifications to work in binary mode.
+The SDK need to be patched and rebuild, it can be done manually or with the script setupenv.bat
 
-` # pip3 install patch`
+First of all download the tools [patch](http://gnuwin32.sourceforge.net/packages/patch.htm) and [make](http://gnuwin32.sourceforge.net/packages/make.htm), and extract the content.
+Call the setupenv.bat script:
 
-` # cd <PATH TO PDK>/packages/ti/drv/uart/src`
+` # setupenv.bat <PATH TO PATCH FOLDER> <PATH TO MAKE FOLDER> <PATH TO PDK FOLDER> `
 
-` # python3 patch -R UART_drv.patch`
+Example:
 
-` # cd <PATH TO PDK>/packages/ti/drv/uart/src/v1`
-
-` # python3 patch -R UART_v1.patch`
-
-And rebuild the uart driver:
-
-` # make uart`
+` # utils\setupenv.bat C:\Users\MyUser\Downloads\patch-2.5.9-7-bin\ C:\Users\MyUser\Downloads\make-3.81-bin C:\ti\pdk_am335x_1_0_10\ `
 
 
 ### Texas instruments projects
