@@ -41,10 +41,8 @@ The next packages must be installed in order to build the repository correctly:
 - EDMA 2.12.05
 
 ### Patch the SDK
-The TI SDK contains a Uart driver configured to work as text mode, the driver needs some modifications to work in binary mode.
-The SDK need to be patched and rebuild, it can be done manually or with the script setupenv.bat
-
-First of all download the tools [patch](http://gnuwin32.sourceforge.net/packages/patch.htm) and [make](http://gnuwin32.sourceforge.net/packages/make.htm), and extract the content.
+The TI SDK contains a Uart driver configured to work with text data, the driver needs some modifications to work in binary mode.
+The SDK has to be patched and rebuild, it can be done manually or with the script setupenv.bat. Download the tools [patch](http://gnuwin32.sourceforge.net/packages/patch.htm) and [make](http://gnuwin32.sourceforge.net/packages/make.htm), and extract the content.
 Call the setupenv.bat script:
 
 ` # setupenv.bat <PATH TO PATCH FOLDER> <PATH TO MAKE FOLDER> <PATH TO PDK FOLDER> `
