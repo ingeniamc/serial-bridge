@@ -1,14 +1,14 @@
-# COCO Bridge
+# Serial Bridge
 
 ## Overview ##
-This repository contains different examples of bridge implementation using the mcb library. The examples are based on different platforms including low MCU performance without OS and high MPU performance such as the sitara family available on development board like beaglebone.
+This repository contains different examples of bridge implementation using the MCB library. The examples are based on different platforms including low MCU performance without OS and high MPU performance such as the sitara family available on development board like beaglebone.
 
 All the examples implements a bridge between a serial communication based on UART or USB (CDC) protocols and the extended SPI used for motion control bus.
 
 ## Init Repository ##
 To clone the repository:
 
-` # git clone <URL> `
+` # git clone https://github.com/ingeniamc/serial-bridge.git `
 
 ` # git submodule init `
 
@@ -61,12 +61,12 @@ Call the *setupenv.bat* script that is located in utils folder of the repository
 
 Example:
 
-` # C:\Users\MyUser\Downloads\coco-bridge\utils\setupenv.bat C:\Users\MyUser\Downloads\patch-2.5.9-7-bin\ C:\Users\MyUser\Downloads\make-3.81-bin C:\ti\pdk_am335x_1_0_10\ `
+` # C:\Users\MyUser\Downloads\serial-bridge\utils\setupenv.bat C:\Users\MyUser\Downloads\patch-2.5.9-7-bin\ C:\Users\MyUser\Downloads\make-3.81-bin C:\ti\pdk_am335x_1_0_10\ `
 
 If the patch utility ask about reverse previous path, overwrite it with *y* option.
 
 #### Linux
-Download and add to path the patch and make tools. Make the script executable and execute:
+Download and add to path the *patch* and *make* tools. Make the script executable and execute:
 
 ` # chmod +x <PATH TO REPO>/utils/setupenv.sh `
 
@@ -74,8 +74,7 @@ Download and add to path the patch and make tools. Make the script executable an
 
 Example
 
-
-` # /home/MyUser/Documents/coco-bridge/utils/setupenv.sh /home/MyUser/ti/pdk_am335x_1_0_10 `
+` # /home/MyUser/Documents/serial-bridge/utils/setupenv.sh /home/MyUser/ti/pdk_am335x_1_0_10 `
 
 If the patch utility ask about reverse previous path, overwrite it with *y* option.
 
