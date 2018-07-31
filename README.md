@@ -5,6 +5,15 @@ This repository contains different examples of bridge implementation using the m
 
 All the examples implements a bridge between a serial communication based on UART or USB (CDC) protocols and the extended SPI used for motion control bus.
 
+## Init Repository ##
+To clone the repository:
+
+` # git clone <URL> `
+
+` # git submodule init `
+
+` # git submodule update `
+
 ## ST ##
 
 ### Highlights ###
@@ -41,19 +50,37 @@ The next packages must be installed in order to build the repository correctly:
 - EDMA 2.12.05
 
 ### Patch the SDK
-The TI SDK contains a Uart driver configured to work with text data, the driver needs some modifications to work in binary mode.
-The SDK has to be patched and rebuild, it can be done manually or with the script setupenv.bat. Download the tools [patch](http://gnuwin32.sourceforge.net/packages/patch.htm) and [make](http://gnuwin32.sourceforge.net/packages/make.htm), and extract the content.
-Call the setupenv.bat script:
+The TI SDK contains a UART driver configured to work with text data, the driver needs some modifications to work in binary mode.
+The SDK has to be patched and rebuild, it can be done manually or with the script *setupenv*. 
 
-` # setupenv.bat <PATH TO PATCH FOLDER> <PATH TO MAKE FOLDER> <PATH TO PDK FOLDER> `
+#### Windows
+Download the tools [patch](http://gnuwin32.sourceforge.net/packages/patch.htm) and [make](http://gnuwin32.sourceforge.net/packages/make.htm), and extract the content.
+Call the *setupenv.bat* script that is located in utils folder of the repository:
+
+` # <PATH TO SCRIPT>\setupenv.bat <PATH TO PATCH FOLDER> <PATH TO MAKE FOLDER> <PATH TO PDK FOLDER> `
 
 Example:
 
-` # utils\setupenv.bat C:\Users\MyUser\Downloads\patch-2.5.9-7-bin\ C:\Users\MyUser\Downloads\make-3.81-bin C:\ti\pdk_am335x_1_0_10\ `
+` # C:\Users\MyUser\Downloads\coco-bridge\utils\setupenv.bat C:\Users\MyUser\Downloads\patch-2.5.9-7-bin\ C:\Users\MyUser\Downloads\make-3.81-bin C:\ti\pdk_am335x_1_0_10\ `
 
+If the patch utility ask about reverse previous path, overwrite it with *y* option.
+
+#### Linux
+Download and add to path the patch and make tools. Make the script executable and execute:
+
+` # chmod +x <PATH TO REPO>/utils/setupenv.sh `
+
+` # <PATH TO REPO>/utils/setupenv.sh <PATH TO PDK FOLDER> `
+
+Example
+
+
+` # /home/MyUser/Documents/coco-bridge/utils/setupenv.sh /home/MyUser/ti/pdk_am335x_1_0_10 `
+
+If the patch utility ask about reverse previous path, overwrite it with *y* option.
 
 ### Texas instruments projects
-1. Clone the repository in your desktop.
+1. Clone the repository and patch the SDK.
 2. Install [Code Compose Studio](http://www.ti.com/tool/ccstudio-C2000 "Code Compose Studio") and check *Sitara AMx Processors* package.
 3. Open CCS and select the workspace, for example the default workspace. Important: any folder is valid except the repository.
 4. Import existing projects using the import CCS Project wizard (Tool bar -> Project/Import CCS Projects...).
