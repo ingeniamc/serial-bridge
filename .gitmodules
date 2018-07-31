@@ -1,6 +1,6 @@
 [submodule "moco-lib"]
 	path = moco-lib
-	url = git@bitbucket.org:ingeniamc/moco-lib.git
+url=https://github.com/ingeniamc/mcblib.git
 [submodule "coco-lib"]
 	path = coco-lib
-	url = git@bitbucket.org:ingeniamc/coco-lib.git
+url=https://github.com/ingeniamc/ipblib.git

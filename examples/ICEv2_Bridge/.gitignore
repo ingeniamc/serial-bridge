@@ -1,0 +1,10 @@
+Debug/
+Release/
+.launches/
+.settings/
+targetConfigs/
+
+*.xdchelp
+*.o
+*.o.dep
+*.libs
