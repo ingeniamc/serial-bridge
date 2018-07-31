@@ -10,6 +10,8 @@ To clone the repository:
 
 ` # git clone https://github.com/ingeniamc/serial-bridge.git `
 
+` # cd serial-bridge `
+
 ` # git submodule init `
 
 ` # git submodule update `
@@ -48,6 +50,8 @@ The next packages must be installed in order to build the repository correctly:
 - SYSBIOS 6.52.0.12
 - NDK 2.26.0.08
 - EDMA 2.12.05
+
+It is highly recommended to install the SDK into the default path. In case of installing the SDK in another path, follow the instructions from this [link](http://processors.wiki.ti.com/index.php/Rebuilding_The_PDK) to set up correctly the environment variables.
 
 ### Patch the SDK
 The TI SDK contains a UART driver configured to work with text data, the driver needs some modifications to work in binary mode.
