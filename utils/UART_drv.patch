@@ -1,0 +1,15 @@
+--- UART_drv.c	2018-07-24 17:04:36.834897792 +0200
++++ UART_drv.c.bak	2018-03-24 02:43:01.000000000 +0100
+@@ -59,9 +59,9 @@
+     SemaphoreP_WAIT_FOREVER,      /* writeTimeout */
+     NULL,                        /* readCallback */
+     NULL,                 /* writeCallback */
+-    UART_RETURN_FULL,  /* readReturnMode */
+-    UART_DATA_BINARY,       /* readDataMode */
+-    UART_DATA_BINARY,       /* writeDataMode */
++    UART_RETURN_NEWLINE,  /* readReturnMode */
++    UART_DATA_TEXT,       /* readDataMode */
++    UART_DATA_TEXT,       /* writeDataMode */
+     UART_ECHO_OFF,         /* readEcho */
+     115200,               /* baudRate */
+     UART_LEN_8,           /* dataLength */

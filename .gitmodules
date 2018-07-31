@@ -1,0 +1,6 @@
+[submodule "moco-lib"]
+	path = moco-lib
+url=https://github.com/ingeniamc/mcblib.git
+[submodule "coco-lib"]
+	path = coco-lib
+url=https://github.com/ingeniamc/ipblib.git
