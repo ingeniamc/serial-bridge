@@ -60,7 +60,7 @@ The SDK has to be patched and rebuild, it can be done manually or with the scrip
 #### Windows
 Download and install the tools [patch](http://gnuwin32.sourceforge.net/packages/patch.htm) and [make](http://gnuwin32.sourceforge.net/packages/make.htm)
 
-Note: the default installation location of the Gnu utilities is C:\Program Files (x86)/GnuWin32
+Note: the default installation location of the Gnu utilities is C:\Program Files (x86)\GnuWin32
 
 Call the *setupenv.bat* script that is located in utils folder of the repository:
 
@@ -75,7 +75,7 @@ Note: if the Gnu utilities were downloaded to the default location on the C: dri
 
 Example:
 
-C:\serial-bridge\utils>setupenv.bat "C:\Program Files (x86)\GnuWin32" "C:\Program Files (x86)\GnuWin32"  "c:\ti\pdk_am335x_1_0_10"
+` # C:\serial-bridge\utils>setupenv.bat "C:\Program Files (x86)\GnuWin32" "C:\Program Files (x86)\GnuWin32"  "c:\ti\pdk_am335x_1_0_10" `
 
 
 If the patch utility ask about reverse previous path, overwrite it with *y* option.
