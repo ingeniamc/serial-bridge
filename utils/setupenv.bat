@@ -28,7 +28,7 @@ xcopy /s %~dp0\src\common\cocoV2\cocoV2AM335x %2\packages\ti\board\src\cocoV2AM3
 @echo Board patch applied, gonna rebuild SDK
 
 PUSHD %2\packages
-pdksetupenv.bat & gmake.exe -k -j4 LIMIT_SOCS="am335x" clean starterware_libs board_lib spi csl gpio uart i2c icss-emac profiling osal nimu nimu-icss
+pdksetupenv.bat & gmake.exe -k LIMIT_SOCS="am335x" clean starterware_libs board_lib spi csl gpio uart i2c osal
 POPD
 @echo Build succeed.
 

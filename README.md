@@ -52,7 +52,7 @@ The next packages must be installed in order to build the repository correctly:
 - SYS/BIOS 6.52.00.12
 - XDC tools 3.50.03.33
 
-[Download](http://software-dl.ti.com/processor-sdk-rtos/esd/AM335X/latest/index_FDS.html)
+[Download](http://software-dl.ti.com/processor-sdk-rtos/esd/AM335X/04_03_00_05/index_FDS.html)
 
 It is highly recommended to install the SDK into the default path. In case of installing the SDK in another path, follow the instructions from this [link](http://processors.wiki.ti.com/index.php/Rebuilding_The_PDK) to set up correctly the environment variables.
 
