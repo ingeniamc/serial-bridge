@@ -44,38 +44,42 @@ When the "STM32CubeMX" generate the code, the listed files have to be recovered.
 ### PDK installation
 The next packages must be installed in order to build the repository correctly:
 
-#### sitara - [SDK RTOS 04.03.00.05](http://software-dl.ti.com/processor-sdk-rtos/esd/AM335X/latest/index_FDS.html)
-- AM335x PDK 1.0.10
-- XDC tools 3.50.3.33
-- SYSBIOS 6.52.0.12
-- NDK 2.26.0.08
-- EDMA 2.12.05
+#### Sitara [Processor SDK RTOS 04.03.00](http://software-dl.ti.com/processor-sdk-rtos/esd/docs/latest/rtos/Release_Specific.html#release-04-03-00)
+- EDMA3 LLD 2.12.05.30C
+- GNU GCC ARM 6.1
+- NDK 2.26.00.08
+- PDK AM335x 1.0.10
+- SYS/BIOS 6.52.00.12
+- XDC tools 3.50.03.33
+
+[Download](http://software-dl.ti.com/processor-sdk-rtos/esd/AM335X/latest/index_FDS.html)
 
 It is highly recommended to install the SDK into the default path. In case of installing the SDK in another path, follow the instructions from this [link](http://processors.wiki.ti.com/index.php/Rebuilding_The_PDK) to set up correctly the environment variables.
 
 ### Patch the SDK
 The TI SDK contains a UART driver configured to work with text data, the driver needs some modifications to work in binary mode.
-The SDK has to be patched and rebuild, it can be done manually or with the script *setupenv*. 
+Coco bridge example needs the coco board to be added to the TI SDK.
+The SDK has to be patched and rebuild, it can be done manually or with the script *setupenv*.
 
 #### Windows
-Download and install the tools [patch](http://gnuwin32.sourceforge.net/packages/patch.htm) and [make](http://gnuwin32.sourceforge.net/packages/make.htm)
+Download and install the tools [patch](http://gnuwin32.sourceforge.net/packages/patch.htm)
 
 Note: the default installation location of the Gnu utilities is C:\Program Files (x86)\GnuWin32
 
-Call the *setupenv.bat* script that is located in utils folder of the repository:
+Call the *setupenv.bat* script with administrator permissions, this script is located in utils folder of the repository:
 
-` # <PATH TO SCRIPT>\setupenv.bat <PATH TO PATCH FOLDER> <PATH TO MAKE FOLDER> <PATH TO PDK FOLDER> `
+` # <PATH TO SCRIPT>\setupenv.bat <PATH TO PATCH FOLDER> <PATH TO PDK FOLDER> `
 
 
 Example:
 
-` # C:\Users\MyUser\Downloads\serial-bridge\utils\setupenv.bat C:\Users\MyUser\Downloads\patch-2.5.9-7-bin\ C:\Users\MyUser\Downloads\make-3.81-bin C:\ti\pdk_am335x_1_0_10\ `
+` # C:\Users\MyUser\Downloads\serial-bridge\utils\setupenv.bat C:\Users\MyUser\Downloads\patch-2.5.9-7-bin\bin\ C:\ti\pdk_am335x_1_0_10\ `
 
 Note: if the Gnu utilities were downloaded to the default location on the C: drive, the arguments to the setupenv.bat function will need to be enclosed in quotes in order for DOS to correctly parse the path.
 
 Example:
 
-` # C:\serial-bridge\utils>setupenv.bat "C:\Program Files (x86)\GnuWin32" "C:\Program Files (x86)\GnuWin32"  "c:\ti\pdk_am335x_1_0_10" `
+` # C:\serial-bridge\utils>setupenv.bat "C:\Program Files (x86)\GnuWin32\bin" "c:\ti\pdk_am335x_1_0_10" `
 
 
 If the patch utility ask about reverse previous path, overwrite it with *y* option.
