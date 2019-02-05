@@ -109,7 +109,8 @@ If the patch utility ask about reverse previous path, overwrite it with *y* opti
 2. Make sure that you have a debugger tool connected to the PC and to the target board.
 3. Edit or create the target configuration (the first time):
     1. Create/open a .ccxml file.
-    2. (eval board) Select *TI XDS100v2 USB Debug Probe* and select the device *ICE_AM3359*.
+    2. (eval board) Select *TI XDS100v2 USB Debug Probe* and select the device *AM3357*.
+    3. Go to Advanced settings and select the *Cortex_A8 CPU*, in CPU properties select as initialization script the coco.gel file provided in utils of this repository.
     3. Save the configuration and click on *Test Connection* to verify it.
 4. If desired, open a terminal (e.g. TeraTerm) to see the UART (baud to 115200).
 5. Click on the *bug* icon arrow and select the desired target configuration.
