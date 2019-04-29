@@ -226,7 +226,7 @@ void BridgeTask(UArg arg0, UArg arg1)
                     tIpbMsg.u16Size = 4;
                     tIpbMsg.u16Cmd = 4;
                     tIpbMsg.eStatus = IPB_SUCCESS;
-                    memset(tIpbMsg.u16Data, 0, (tIpbMsg.u16Size * sizeof(uint16_t)));
+                    memcpy(tIpbMsg.u16Data, pMcbMsg->u16Data, (tIpbMsg.u16Size * sizeof(uint16_t)));
                 }
             }
             else
