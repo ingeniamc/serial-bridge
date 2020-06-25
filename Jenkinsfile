@@ -38,14 +38,14 @@ node('xcore') {
                 sh """ 
                     mkdir -p /mnt/dist/turonet/${version_pre}
                     
-                    cp LiteCoco.hex /mnt/dist/turonet/${version_pre}/turonet_${version_pre}.hex
+                    cp examples/STM32F042_Bridge/LiteCoco/TrueSTUDIO/LiteCoco/Release/LiteCoco.hex /mnt/dist/turonet/${version_pre}/turonet_${version_pre}.hex
                    """
             }
             else {
                 sh """ 
                     mkdir -p /mnt/dist/turonet/candidate_${version_pre}
                     
-                    cp LiteCoco.hex /mnt/dist/turonet/candidate_${version_pre}/turonet_${version_pre}.hex
+                    cp examples/STM32F042_Bridge/LiteCoco/TrueSTUDIO/LiteCoco/Release/LiteCoco.hex /mnt/dist/turonet/candidate_${version_pre}/turonet_${version_pre}.hex
                    """
             }
         }
