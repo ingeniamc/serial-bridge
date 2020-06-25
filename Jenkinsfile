@@ -5,11 +5,6 @@ properties([
 node('xcore') {
 
     def version_pre = '1.0.0'
-    def version_gen = '000'
-    
-    if (env.BRANCH_NAME != 'master') {
-        version_gen = VersionNumber('${BUILDS_ALL_TIME, XXX}')
-    }
 	
 	deleteDir()
     
@@ -35,5 +30,24 @@ node('xcore') {
     
     stage ('Archive outputs') {
         archiveArtifacts artifacts: '**/*.hex'
+    }
+    
+    if (env.BRANCH_NAME != 'develop') {    
+        stage('Publish linux outputs') {
+            if (env.BRANCH_NAME == 'master'){
+                sh """ 
+                    mkdir -p /mnt/dist/turonet/${version_pre}
+                    
+                    cp LiteCoco.hex /mnt/dist/turonet/${version_pre}/turonet_${version_pre}.hex
+                   """
+            }
+            else {
+                sh """ 
+                    mkdir -p /mnt/dist/turonet/candidate_${version_pre}
+                    
+                    cp LiteCoco.hex /mnt/dist/turonet/candidate_${version_pre}/turonet_${version_pre}.hex
+                   """
+            }
+        }
     }
 }
