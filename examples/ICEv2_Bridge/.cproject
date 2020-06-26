@@ -47,9 +47,9 @@
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MCPU.2132452205" name="Target CPU (-mcpu)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MCPU" value="cortex-a8" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MTUNE.1240471165" name="Tune code for the given processor (-mtune)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MTUNE" value="cortex-a8" valueType="string"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MARCH.1435749581" name="Specify the name of the target architecture (-march)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MARCH" value="armv7-a" valueType="string"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MARCH.1435749581" name="Target architecture (-march)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MARCH" value="armv7-a" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.CODE_STATE.159413202" name="Code state" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.CODE_STATE" value="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.CODE_STATE.ARM" valueType="enumerated"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MFLOAT_ABI.1425383049" name="Specify if floating point hardware should be used (-mfloat-abi)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MFLOAT_ABI" value="hard" valueType="string"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MFLOAT_ABI.1425383049" name="Use floating point hardware (-mfloat-abi)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MFLOAT_ABI" value="hard" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.INCLUDE_PATH.753241877" name="Include paths (-I)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.INCLUDE_PATH" valueType="includePath">
 									<listOptionValue builtIn="false" value="${TI_PDK_INCLUDE_PATH}"/>
 									<listOptionValue builtIn="false" value="${BIOS_INCLUDE_PATH}"/>
@@ -60,7 +60,7 @@
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.DEBUG.1314183137" name="Generate debug information (-g)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.DEBUG" value="true" valueType="boolean"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.DWARF_VERSION.17495235" name="Generate debug information in DWARF version (-gdwarf-)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.DWARF_VERSION" value="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.DWARF_VERSION.3" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.STRICT_DWARF.772211434" name="Do not emit DWARF additions beyond selected version (-gstrict-dwarf)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.STRICT_DWARF" value="true" valueType="boolean"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.ASM_SPECIFIC_FLAGS.1656719049" name="Assembly source specific flags" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.ASM_SPECIFIC_FLAGS" valueType="stringList">
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.ASM_SPECIFIC_FLAGS.1656719049" name="Miscellaneous assembly source specific flags" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.ASM_SPECIFIC_FLAGS" valueType="stringList">
 									<listOptionValue builtIn="false" value="-x assembler-with-cpp"/>
 								</option>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compiler.inputType__C_SRCS.965384601" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compiler.inputType__C_SRCS"/>
@@ -93,7 +93,7 @@
 									<listOptionValue builtIn="false" value="${TI_PDK_INSTALL_DIR}/packages/ti/board/lib/evmAM335x/a8/release/"/>
 									<listOptionValue builtIn="false" value="${xdc_find:gnu/targets/arm/libs/install-native/arm-none-eabi/lib/hard:${ProjName}}"/>
 								</option>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.OTHER_FLAGS.842993130" name="Other flags" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.OTHER_FLAGS" valueType="stringList">
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.OTHER_FLAGS.842993130" name="Miscellaneous flags" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.OTHER_FLAGS" valueType="stringList">
 									<listOptionValue builtIn="false" value="--specs=nano.specs"/>
 								</option>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.exeLinker.inputType__CMD_SRCS.800864854" name="Linker Command Files" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.exeLinker.inputType__CMD_SRCS"/>
@@ -162,18 +162,19 @@
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MCPU.20725572" name="Target CPU (-mcpu)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MCPU" useByScannerDiscovery="false" value="cortex-a8" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MTUNE.1124714317" name="Tune code for the given processor (-mtune)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MTUNE" useByScannerDiscovery="false" value="cortex-a8" valueType="string"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MARCH.732928403" name="Specify the name of the target architecture (-march)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MARCH" useByScannerDiscovery="false" value="armv7-a" valueType="string"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MARCH.732928403" name="Target architecture (-march)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MARCH" useByScannerDiscovery="false" value="armv7-a" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.CODE_STATE.130461538" name="Code state" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.CODE_STATE" useByScannerDiscovery="false" value="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.CODE_STATE.ARM" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.INCLUDE_PATH.1037412013" name="Include paths (-I)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.INCLUDE_PATH" valueType="includePath">
 									<listOptionValue builtIn="false" value="${TI_PDK_INCLUDE_PATH}"/>
 									<listOptionValue builtIn="false" value="${BIOS_INCLUDE_PATH}"/>
 									<listOptionValue builtIn="false" value="${PROJECT_ROOT}"/>
 									<listOptionValue builtIn="false" value="${CG_TOOL_INCLUDE_PATH}"/>
+									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/../../&quot;"/>
 								</option>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.ASM_SPECIFIC_FLAGS.2142200186" name="Assembly source specific flags" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.ASM_SPECIFIC_FLAGS" useByScannerDiscovery="false" valueType="stringList">
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.ASM_SPECIFIC_FLAGS.2142200186" name="Miscellaneous assembly source specific flags" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.ASM_SPECIFIC_FLAGS" useByScannerDiscovery="false" valueType="stringList">
 									<listOptionValue builtIn="false" value="-x assembler-with-cpp"/>
 								</option>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MFLOAT_ABI.574082201" name="Specify if floating point hardware should be used (-mfloat-abi)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MFLOAT_ABI" useByScannerDiscovery="false" value="hard" valueType="string"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MFLOAT_ABI.574082201" name="Use floating point hardware (-mfloat-abi)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compilerID.MFLOAT_ABI" useByScannerDiscovery="false" value="hard" valueType="string"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compiler.inputType__C_SRCS.129658345" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compiler.inputType__C_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compiler.inputType__CPP_SRCS.589824859" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compiler.inputType__CPP_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compiler.inputType__ASM_SRCS.1479786504" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.compiler.inputType__ASM_SRCS"/>
@@ -204,7 +205,7 @@
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.NOSTARTFILES.1382431310" name="Do not use the standard system startup files when linking (-nostartfiles)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.NOSTARTFILES" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.STATIC.306521296" name="Do not link with the shared libraries (-static)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.STATIC" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.GC_SECTIONS.823828058" name="Remove unused sections (--gc-sections)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.GC_SECTIONS" useByScannerDiscovery="false" value="true" valueType="boolean"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.OTHER_FLAGS.942859079" name="Other flags" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.OTHER_FLAGS" useByScannerDiscovery="false" valueType="stringList">
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.OTHER_FLAGS.942859079" name="Miscellaneous flags" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.linkerID.OTHER_FLAGS" useByScannerDiscovery="false" valueType="stringList">
 									<listOptionValue builtIn="false" value="--specs=nano.specs"/>
 								</option>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.exeLinker.inputType__CMD_SRCS.961642767" name="Linker Command Files" superClass="com.ti.ccstudio.buildDefinitions.TMS470_GNU_6.0.exeLinker.inputType__CMD_SRCS"/>

@@ -58,14 +58,25 @@ The TI SDK contains a UART driver configured to work with text data, the driver 
 The SDK has to be patched and rebuild, it can be done manually or with the script *setupenv*. 
 
 #### Windows
-Download the tools [patch](http://gnuwin32.sourceforge.net/packages/patch.htm) and [make](http://gnuwin32.sourceforge.net/packages/make.htm), and extract the content.
+Download and install the tools [patch](http://gnuwin32.sourceforge.net/packages/patch.htm) and [make](http://gnuwin32.sourceforge.net/packages/make.htm)
+
+Note: the default installation location of the Gnu utilities is C:\Program Files (x86)\GnuWin32
+
 Call the *setupenv.bat* script that is located in utils folder of the repository:
 
 ` # <PATH TO SCRIPT>\setupenv.bat <PATH TO PATCH FOLDER> <PATH TO MAKE FOLDER> <PATH TO PDK FOLDER> `
 
+
 Example:
 
 ` # C:\Users\MyUser\Downloads\serial-bridge\utils\setupenv.bat C:\Users\MyUser\Downloads\patch-2.5.9-7-bin\ C:\Users\MyUser\Downloads\make-3.81-bin C:\ti\pdk_am335x_1_0_10\ `
+
+Note: if the Gnu utilities were downloaded to the default location on the C: drive, the arguments to the setupenv.bat function will need to be enclosed in quotes in order for DOS to correctly parse the path.
+
+Example:
+
+` # C:\serial-bridge\utils>setupenv.bat "C:\Program Files (x86)\GnuWin32" "C:\Program Files (x86)\GnuWin32"  "c:\ti\pdk_am335x_1_0_10" `
+
 
 If the patch utility ask about reverse previous path, overwrite it with *y* option.
 
