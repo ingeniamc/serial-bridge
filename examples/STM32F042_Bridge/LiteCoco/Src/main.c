@@ -123,6 +123,8 @@ int main(void)
   Mcb_Init(&dvrMaster, MCB_BLOCKING, 0, false, MCB_DFLT_TIMEOUT);
   AttachExtiEvent(IrqEvent, &dvrMaster.tIntf);
   Ipb_Init(&dvrSlave, USB_BASED, IPB_BLOCKING);
+  /* Put the device out of reset */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -133,7 +135,6 @@ int main(void)
     {
         if (ipbMsg.u16Node == 10)
         {
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
             mcbMsg.u16Node = ipbMsg.u16SubNode;
             mcbMsg.u16Addr = ipbMsg.u16Addr;
             mcbMsg.u16Cmd = ipbMsg.u16Cmd;
@@ -152,8 +153,6 @@ int main(void)
                     mcbMsg.eStatus = MCB_ERROR;
                     break;
             }
-
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
 
             if (mcbMsg.eStatus == MCB_SUCCESS)
             {
